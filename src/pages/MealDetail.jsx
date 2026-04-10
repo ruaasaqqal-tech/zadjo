@@ -65,7 +65,7 @@ export default function MealDetail() {
       <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border/50">
         <div className="relative aspect-video">
           <img
-            src={meal.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600'}
+            src={meal.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600'}
             alt={meal.meal_name}
             className="w-full h-full object-cover"
           />
