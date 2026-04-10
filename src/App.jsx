@@ -5,7 +5,18 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+import Layout from './components/Layout';
+import AdminLayout from './components/admin/AdminLayout';
+import Home from './pages/Home';
+import Menu from './pages/Menu';
+import MealDetail from './pages/MealDetail';
+import Cart from './pages/Cart';
+import OrderSuccess from './pages/OrderSuccess';
+import TrackOrder from './pages/TrackOrder';
+import Dashboard from './pages/admin/Dashboard';
+import AdminMeals from './pages/admin/AdminMeals';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminCoupons from './pages/admin/AdminCoupons';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,7 +44,20 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/menu" element={<Menu />} />
+        <Route path="/meal/:id" element={<MealDetail />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+        <Route path="/track-order" element={<TrackOrder />} />
+      </Route>
+      <Route element={<AdminLayout />}>
+        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin/meals" element={<AdminMeals />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/coupons" element={<AdminCoupons />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
