@@ -15,7 +15,7 @@ export default function HeroBanner() {
             className="flex-1 text-center md:text-right"
           >
             <div className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-bold mb-4">
-              ⚡ اطلب قبل الساعة 3 العصر لتوصيل نفس اليوم
+              🕐 الطلب والتوصيل متاحان على مدار الساعة
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold text-foreground mb-4 leading-tight">
               أكل بيتي طازج<br />

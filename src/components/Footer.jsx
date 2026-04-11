@@ -42,7 +42,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2 text-sm opacity-70">
                 <Clock className="h-4 w-4" />
-                <span>يومياً من 9 صباحاً - 9 مساءً</span>
+                <span>الطلب والتوصيل متاحان على مدار الساعة</span>
               </div>
             </div>
           </div>

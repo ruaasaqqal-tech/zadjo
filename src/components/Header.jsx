@@ -78,7 +78,7 @@ export default function Header() {
               <Link to="/" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">الرئيسية</Link>
               <Link to="/menu" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">القائمة</Link>
               <Link to="/track-order" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">تتبع طلبك</Link>
-              <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">لوحة التحكم</Link>
+              <Link to="/profile" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">حسابي</Link>
             </nav>
           </motion.div>
         )}

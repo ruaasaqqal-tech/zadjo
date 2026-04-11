@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Package, Clock, Truck, CheckCircle } from 'lucide-react';
+import { Package, Clock, Truck, CheckCircle, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/lib/AuthContext';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const STATUS_STEPS = [
   { key: 'تم الطلب', label: 'تم الطلب', icon: Package },
@@ -14,72 +14,58 @@ const STATUS_STEPS = [
 ];
 
 export default function TrackOrder() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialId = urlParams.get('id') || '';
-  const [orderId, setOrderId] = useState(initialId);
-  const [searchId, setSearchId] = useState(initialId);
+  const { user } = useAuth();
 
-  const { data: order, isLoading, refetch } = useQuery({
-    queryKey: ['order-track', searchId],
-    queryFn: async () => {
-      if (!searchId) return null;
-      const orders = await base44.entities.Order.filter({ id: searchId });
-      return orders[0] || null;
-    },
-    enabled: !!searchId,
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ['my-orders', user?.email],
+    queryFn: () => base44.entities.Order.filter({ created_by: user?.email }, '-created_date', 1),
+    enabled: !!user?.email,
   });
 
-  const handleSearch = () => {
-    setSearchId(orderId.trim());
-    refetch();
-  };
-
+  const order = orders[0] || null;
   const currentStepIdx = STATUS_STEPS.findIndex(s => s.key === order?.status);
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-6 text-center">تتبع طلبك</h1>
 
-      <div className="flex gap-2 mb-8">
-        <Input
-          value={orderId}
-          onChange={(e) => setOrderId(e.target.value)}
-          placeholder="أدخل رقم الطلب"
-          className="rounded-xl"
-          dir="ltr"
-        />
-        <Button onClick={handleSearch} className="rounded-xl px-6">
-          <Search className="h-4 w-4" />
-        </Button>
-      </div>
-
       {isLoading && (
-        <div className="text-center text-muted-foreground py-8">جاري البحث...</div>
+        <div className="text-center text-muted-foreground py-12">جاري التحميل...</div>
       )}
 
-      {searchId && !isLoading && !order && (
-        <div className="text-center text-muted-foreground py-8">
-          <p className="text-lg mb-2">لم يتم العثور على الطلب</p>
-          <p className="text-sm">تأكد من رقم الطلب وحاول مجدداً</p>
-        </div>
+      {!isLoading && !order && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16"
+        >
+          <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+          <p className="text-lg font-medium text-muted-foreground">لا يوجد لديك طلبات حالياً</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">اطلب وجبتك المفضلة الآن!</p>
+          <Link to="/menu">
+            <Button className="rounded-2xl px-8">تصفح القائمة</Button>
+          </Link>
+        </motion.div>
       )}
 
       {order && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm"
+          className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm space-y-5"
         >
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center">
             <div>
-              <h3 className="font-bold">طلب #{order.id?.slice(0, 8)}</h3>
-              <p className="text-xs text-muted-foreground">{order.customer_name}</p>
+              <h3 className="font-bold text-base">طلب #{order.id?.slice(0, 8)}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {new Date(order.created_date).toLocaleString('ar-JO', { dateStyle: 'medium', timeStyle: 'short' })}
+              </p>
             </div>
             <span className="text-lg font-bold text-primary">{order.total?.toFixed(2)} د.أ</span>
           </div>
 
           {/* Status tracker */}
-          <div className="relative mb-6">
+          <div>
             {STATUS_STEPS.map((step, i) => {
               const Icon = step.icon;
               const isActive = i <= currentStepIdx;
@@ -104,18 +90,30 @@ export default function TrackOrder() {
 
           {/* Items */}
           <div className="border-t border-border pt-4">
-            <h4 className="font-medium text-sm mb-2">تفاصيل الطلب</h4>
+            <h4 className="font-medium text-sm mb-3">تفاصيل الطلب</h4>
             {order.items?.map((item, i) => (
-              <div key={i} className="flex justify-between text-sm py-1">
+              <div key={i} className="flex justify-between text-sm py-1.5">
                 <span>{item.meal_name} × {item.quantity}</span>
                 <span className="text-muted-foreground">{(item.price * item.quantity).toFixed(2)} د.أ</span>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-border mt-3 pt-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">العنوان</span><span>{order.address}</span></div>
-            <div className="flex justify-between mt-1"><span className="text-muted-foreground">الدفع</span><span>نقداً عند الاستلام</span></div>
+          <div className="border-t border-border pt-3 text-sm space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">العنوان</span>
+              <span className="text-right max-w-[60%]">{order.address}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">الدفع</span>
+              <span>نقداً عند الاستلام</span>
+            </div>
+            {order.discount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">الخصم</span>
+                <span className="text-green-600">- {order.discount?.toFixed(2)} د.أ</span>
+              </div>
+            )}
           </div>
         </motion.div>
       )}
