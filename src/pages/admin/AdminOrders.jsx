@@ -28,6 +28,10 @@ export default function AdminOrders() {
   const filtered = filter === 'الكل' ? orders : orders.filter(o => o.status === filter);
 
   const updateStatus = async (orderId, newStatus) => {
+    // Optimistic update
+    queryClient.setQueryData(['admin-orders'], (old = []) =>
+      old.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    );
     await base44.entities.Order.update(orderId, { status: newStatus });
     queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
   };
