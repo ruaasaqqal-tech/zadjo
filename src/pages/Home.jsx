@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PullToRefresh from '../components/PullToRefresh';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import HeroBanner from '../components/HeroBanner';
@@ -11,7 +12,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
-  const { data: meals = [], isLoading } = useQuery({
+  const { data: meals = [], isLoading, refetch } = useQuery({
     queryKey: ['meals'],
     queryFn: () => base44.entities.Meal.list('-orders_count', 50),
   });
@@ -28,8 +29,8 @@ export default function Home() {
   const topRated = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8);
 
   return (
+    <PullToRefresh onRefresh={refetch}>
     <div>
-      <HeroBanner />
 
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
         <div className="bg-card rounded-2xl p-4 shadow-lg border border-border/50 space-y-4">
@@ -52,5 +53,6 @@ export default function Home() {
 
       <TrustSection />
     </div>
+    </PullToRefresh>
   );
 }

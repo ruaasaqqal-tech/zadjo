@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PullToRefresh from '../components/PullToRefresh';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import SearchBar from '../components/SearchBar';
@@ -9,7 +10,7 @@ export default function Menu() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
-  const { data: meals = [], isLoading } = useQuery({
+  const { data: meals = [], isLoading, refetch } = useQuery({
     queryKey: ['meals'],
     queryFn: () => base44.entities.Meal.list('-orders_count', 100),
   });
@@ -22,6 +23,7 @@ export default function Menu() {
   });
 
   return (
+    <PullToRefresh onRefresh={refetch}>
     <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-6">القائمة الكاملة</h1>
       <div className="space-y-4 mb-6">
@@ -30,5 +32,6 @@ export default function Menu() {
       </div>
       <MealSection title={`${filtered.length} وجبة متاحة`} meals={filtered} loading={isLoading} showAll />
     </div>
+    </PullToRefresh>
   );
 }

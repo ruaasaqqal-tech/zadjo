@@ -17,6 +17,7 @@ import Dashboard from './pages/admin/Dashboard';
 import AdminMeals from './pages/admin/AdminMeals';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCoupons from './pages/admin/AdminCoupons';
+import Profile from './pages/Profile';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -51,6 +52,7 @@ const AuthenticatedApp = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
         <Route path="/track-order" element={<TrackOrder />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<Dashboard />} />

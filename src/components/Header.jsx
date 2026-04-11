@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Menu, X, ArrowRight, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCart, getCartCount } from '@/lib/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Header() {
   const [cart, setCart] = useState(getCart());
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isRoot = location.pathname === '/';
 
   useEffect(() => {
     const handler = () => setCart(getCart());
@@ -18,9 +21,14 @@ export default function Header() {
   const count = getCartCount(cart);
 
   return (
-    <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/50">
+    <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        {!isRoot ? (
+          <button onClick={() => navigate(-1)} className="md:hidden flex items-center gap-1 text-muted-foreground select-none">
+            <ArrowRight className="h-5 w-5" />
+          </button>
+        ) : null}
+        <Link to="/" className="flex items-center gap-2 select-none">
           <span className="text-2xl">🍲</span>
           <div>
             <h1 className="text-lg font-bold text-foreground leading-tight">لقمة بيت</h1>
@@ -35,6 +43,9 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link to="/profile" className="hidden md:flex">
+            <Button variant="ghost" size="icon"><UserCircle className="h-5 w-5" /></Button>
+          </Link>
           <Link to="/cart" className="relative">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
@@ -49,7 +60,6 @@ export default function Header() {
               )}
             </Button>
           </Link>
-
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>

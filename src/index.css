@@ -87,6 +87,11 @@
   }
   body {
     @apply bg-background text-foreground font-cairo;
+    overscroll-behavior-y: none;
+  }
+  button, a, nav, header {
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 
