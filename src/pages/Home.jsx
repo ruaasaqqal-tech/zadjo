@@ -7,6 +7,7 @@ import SearchBar from '../components/SearchBar';
 import CategoryBar from '../components/CategoryBar';
 import MealSection from '../components/MealSection';
 import TrustSection from '../components/TrustSection';
+import KitchensSection from '../components/KitchensSection';
 
 export default function Home() {
   const [search, setSearch] = useState('');
@@ -44,6 +45,7 @@ export default function Home() {
           <MealSection title="نتائج البحث" meals={filtered} loading={isLoading} showAll />
         ) : (
           <>
+            <KitchensSection />
             <MealSection title="🔥 عرض اليوم" meals={todayDeals} loading={isLoading} />
             <MealSection title="⭐ الأكثر طلباً" meals={popular} loading={isLoading} />
             <MealSection title="💎 الأعلى تقييماً" meals={topRated} loading={isLoading} />

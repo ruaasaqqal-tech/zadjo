@@ -17,7 +17,9 @@ import Dashboard from './pages/admin/Dashboard';
 import AdminMeals from './pages/admin/AdminMeals';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminKitchens from './pages/admin/AdminKitchens';
 import Profile from './pages/Profile';
+import KitchenProfile from './pages/KitchenProfile';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -53,12 +55,14 @@ const AuthenticatedApp = () => {
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
         <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/kitchen/:cookName" element={<KitchenProfile />} />
       </Route>
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/meals" element={<AdminMeals />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/coupons" element={<AdminCoupons />} />
+        <Route path="/admin/kitchens" element={<AdminKitchens />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

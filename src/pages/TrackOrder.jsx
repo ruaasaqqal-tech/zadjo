@@ -54,13 +54,16 @@ export default function TrackOrder() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm space-y-5"
         >
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-base">طلب #{order.id?.slice(0, 8)}</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {new Date(order.created_date).toLocaleString('ar-JO', { dateStyle: 'medium', timeStyle: 'short' })}
-              </p>
+          {order.kitchen_name && (
+            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-1">
+              <span className="text-lg">🏠</span>
+              <div>
+                <p className="text-xs text-muted-foreground">طلبك من</p>
+                <p className="text-sm font-bold text-orange-700 dark:text-orange-400">{order.kitchen_name}</p>
+              </div>
             </div>
+          )}
+          <div className="flex justify-between items-center">
             <span className="text-lg font-bold text-primary">{order.total?.toFixed(2)} د.أ</span>
           </div>
 

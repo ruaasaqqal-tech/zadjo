@@ -1,0 +1,156 @@
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { useParams } from 'react-router-dom';
+import { ChefHat, Star, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { addToCartWithKitchenCheck } from '@/lib/cartStore';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { clearCart } from '@/lib/cartStore';
+
+export default function KitchenProfile() {
+  const { cookName } = useParams();
+  const decodedName = decodeURIComponent(cookName);
+  const [conflictMeal, setConflictMeal] = useState(null);
+  const [conflictKitchen, setConflictKitchen] = useState('');
+
+  const { data: kitchens = [] } = useQuery({
+    queryKey: ['kitchen-profile', decodedName],
+    queryFn: () => base44.entities.Kitchen.filter({ cook_name: decodedName }),
+  });
+  const kitchen = kitchens[0];
+
+  const { data: meals = [], isLoading } = useQuery({
+    queryKey: ['kitchen-meals', decodedName],
+    queryFn: () => base44.entities.Meal.filter({ cook_name: decodedName, available: true }),
+  });
+
+  const handleAdd = (meal) => {
+    const result = addToCartWithKitchenCheck(meal, decodedName);
+    if (result.conflict) {
+      setConflictMeal(meal);
+      setConflictKitchen(result.currentKitchen);
+    } else {
+      toast.success(`تمت إضافة ${meal.meal_name} إلى السلة`);
+    }
+  };
+
+  const handleClearAndAdd = () => {
+    clearCart();
+    addToCartWithKitchenCheck(conflictMeal, decodedName);
+    toast.success(`تمت إضافة ${conflictMeal.meal_name} إلى السلة`);
+    setConflictMeal(null);
+    setConflictKitchen('');
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6">
+      {/* Kitchen Header */}
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-2xl overflow-hidden mb-6">
+        {kitchen?.image && (
+          <div className="h-40 overflow-hidden">
+            <img src={kitchen.image} alt={decodedName} className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-full">
+              <ChefHat className="h-5 w-5 text-orange-500" />
+            </div>
+            <h1 className="text-2xl font-bold">{decodedName}</h1>
+          </div>
+          {kitchen?.specialty && (
+            <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">{kitchen.specialty}</p>
+          )}
+          {kitchen?.description && (
+            <p className="text-sm text-muted-foreground">{kitchen.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Conflict Dialog */}
+      <AnimatePresence>
+        {conflictMeal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="bg-card rounded-2xl p-6 w-full max-w-sm border border-border"
+            >
+              <div className="flex items-center gap-2 mb-3 text-amber-600">
+                <AlertTriangle className="h-5 w-5" />
+                <h3 className="font-bold">تنبيه</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                يمكنك الطلب من مطبخ واحد في كل مرة.
+              </p>
+              <p className="text-sm mb-5">
+                السلة تحتوي على طلبات من <span className="font-bold text-primary">{conflictKitchen}</span>. هل تريد تفريغ السلة والطلب من <span className="font-bold text-primary">{decodedName}</span>؟
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setConflictMeal(null)}>إلغاء</Button>
+                <Button className="flex-1 rounded-xl" onClick={handleClearAndAdd}>تفريغ وإضافة</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Meals */}
+      <h2 className="text-lg font-bold mb-4">
+        {isLoading ? 'جاري التحميل...' : `${meals.length} وجبة متاحة`}
+      </h2>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4">
+          {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl bg-muted animate-pulse" />)}
+        </div>
+      ) : meals.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">لا توجد وجبات متاحة حالياً</div>
+      ) : (
+        <div className="space-y-3">
+          {meals.map((meal, i) => (
+            <motion.div
+              key={meal.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-card rounded-2xl border border-border/50 overflow-hidden flex items-center gap-4 p-3 shadow-sm"
+            >
+              <img
+                src={meal.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'}
+                alt={meal.meal_name}
+                className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                loading="lazy"
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm mb-0.5">{meal.meal_name}</h3>
+                {meal.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-1">{meal.description}</p>
+                )}
+                {meal.rating > 0 && (
+                  <div className="flex items-center gap-1 mb-1">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    <span className="text-xs font-bold">{meal.rating.toFixed(1)}</span>
+                  </div>
+                )}
+                <span className="text-base font-extrabold text-primary">{meal.price} <span className="text-xs font-medium">د.أ</span></span>
+              </div>
+              <Button size="sm" className="rounded-xl h-9 gap-1 flex-shrink-0" onClick={() => handleAdd(meal)}>
+                <ShoppingCart className="h-3.5 w-3.5" />
+                <span className="text-xs">أضف</span>
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getCart, removeFromCart, updateQuantity, clearCart, getCartTotal } from '@/lib/cartStore';
+import { getCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartKitchen } from '@/lib/cartStore';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,11 +60,13 @@ export default function Cart() {
       return;
     }
     setSubmitting(true);
+    const kitchenName = getCartKitchen(cart);
     const order = await base44.entities.Order.create({
       customer_name: form.customer_name,
       phone: form.phone,
       address: form.address,
       notes: form.notes,
+      kitchen_name: kitchenName || '',
       items: cart.map(item => ({
         meal_id: item.meal_id,
         meal_name: item.meal_name,

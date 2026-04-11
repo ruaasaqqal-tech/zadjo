@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, UtensilsCrossed, Package, Tag, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, Package, Tag, ArrowRight, ChefHat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { path: '/admin/meals', label: 'الوجبات', icon: UtensilsCrossed },
   { path: '/admin/orders', label: 'الطلبات', icon: Package },
   { path: '/admin/coupons', label: 'كوبونات', icon: Tag },
+  { path: '/admin/kitchens', label: 'المطابخ', icon: ChefHat },
 ];
 
 export default function AdminLayout() {

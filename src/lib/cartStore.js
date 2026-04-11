@@ -58,3 +58,33 @@ export function getCartTotal(cart) {
 export function getCartCount(cart) {
   return cart.reduce((sum, item) => sum + item.quantity, 0);
 }
+
+export function getCartKitchen(cart) {
+  if (!cart || cart.length === 0) return null;
+  return cart[0]?.kitchen_name || null;
+}
+
+export function addToCartWithKitchenCheck(meal, kitchenName) {
+  const cart = getCart();
+  const currentKitchen = getCartKitchen(cart);
+  if (cart.length > 0 && currentKitchen && currentKitchen !== kitchenName) {
+    return { conflict: true, currentKitchen };
+  }
+  const existing = cart.find(item => item.meal_id === meal.id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({
+      meal_id: meal.id,
+      meal_name: meal.meal_name,
+      cook_name: meal.cook_name,
+      kitchen_name: kitchenName,
+      price: meal.price,
+      image: meal.image,
+      quantity: 1,
+    });
+  }
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  window.dispatchEvent(new Event('cart-updated'));
+  return { conflict: false, cart };
+}
