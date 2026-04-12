@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartKitchen } from '@/lib/cartStore';
+import { calcDistance, calcDeliveryFee } from '@/lib/locationUtils';
+import useUserLocation from '@/hooks/useUserLocation';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +21,20 @@ export default function Cart() {
   const [form, setForm] = useState({ customer_name: '', phone: '', address: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { location: userLoc } = useUserLocation();
+
+  const kitchenName = getCartKitchen(cart);
+  const { data: kitchens = [] } = useQuery({
+    queryKey: ['kitchen-for-cart', kitchenName],
+    queryFn: () => kitchenName ? base44.entities.Kitchen.filter({ cook_name: kitchenName }) : Promise.resolve([]),
+    enabled: !!kitchenName,
+  });
+  const kitchen = kitchens[0];
+
+  const distance = userLoc && kitchen?.latitude && kitchen?.longitude
+    ? calcDistance(userLoc.lat, userLoc.lng, kitchen.latitude, kitchen.longitude)
+    : null;
+  const deliveryFee = calcDeliveryFee(distance);
 
   useEffect(() => {
     const handler = () => setCart(getCart());
@@ -26,7 +43,7 @@ export default function Cart() {
   }, []);
 
   const subtotal = getCartTotal(cart);
-  const total = Math.max(0, subtotal - discount);
+  const total = Math.max(0, subtotal - discount + deliveryFee);
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -76,6 +93,7 @@ export default function Cart() {
       })),
       subtotal,
       discount,
+      delivery_fee: deliveryFee,
       total,
       coupon_code: discountInfo?.code || '',
       status: 'تم الطلب',
@@ -199,7 +217,7 @@ export default function Cart() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between"><span className="text-muted-foreground">المجموع الفرعي</span><span>{subtotal.toFixed(2)} د.أ</span></div>
           {discount > 0 && <div className="flex justify-between text-emerald-600"><span>الخصم</span><span>-{discount.toFixed(2)} د.أ</span></div>}
-          <div className="flex justify-between"><span className="text-muted-foreground">التوصيل</span><span className="text-emerald-600">مجاني</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">التوصيل</span><span className="text-primary font-medium">{deliveryFee.toFixed(2)} د.أ{distance ? ` (${distance.toFixed(1)} كم)` : ''}</span></div>
           <div className="border-t border-border pt-2 flex justify-between text-lg font-bold">
             <span>المجموع</span>
             <span className="text-primary">{total.toFixed(2)} د.أ</span>

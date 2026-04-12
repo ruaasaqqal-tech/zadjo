@@ -1,19 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useParams } from 'react-router-dom';
-import { ChefHat, Star, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { ChefHat, Star, ShoppingCart, AlertTriangle, MapPin, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addToCartWithKitchenCheck } from '@/lib/cartStore';
+import { addToCartWithKitchenCheck, clearCart } from '@/lib/cartStore';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { clearCart } from '@/lib/cartStore';
+import useUserLocation from '@/hooks/useUserLocation';
+import { calcDistance, calcDeliveryFee, MAX_DELIVERY_KM, buildWhatsAppURL } from '@/lib/locationUtils';
 
 export default function KitchenProfile() {
   const { cookName } = useParams();
   const decodedName = decodeURIComponent(cookName);
   const [conflictMeal, setConflictMeal] = useState(null);
   const [conflictKitchen, setConflictKitchen] = useState('');
+  const { location: userLoc } = useUserLocation();
 
   const { data: kitchens = [] } = useQuery({
     queryKey: ['kitchen-profile', decodedName],
@@ -25,6 +27,12 @@ export default function KitchenProfile() {
     queryKey: ['kitchen-meals', decodedName],
     queryFn: () => base44.entities.Meal.filter({ cook_name: decodedName, available: true }),
   });
+
+  const distance = userLoc && kitchen?.latitude && kitchen?.longitude
+    ? calcDistance(userLoc.lat, userLoc.lng, kitchen.latitude, kitchen.longitude)
+    : null;
+  const outOfRange = distance !== null && distance > MAX_DELIVERY_KM;
+  const deliveryFee = calcDeliveryFee(distance);
 
   const handleAdd = (meal) => {
     const result = addToCartWithKitchenCheck(meal, decodedName);
@@ -47,14 +55,14 @@ export default function KitchenProfile() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       {/* Kitchen Header */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-2xl overflow-hidden mb-6">
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-2xl overflow-hidden mb-4">
         {kitchen?.image && (
-          <div className="h-40 overflow-hidden">
+          <div className="h-44 overflow-hidden">
             <img src={kitchen.image} alt={decodedName} className="w-full h-full object-cover" />
           </div>
         )}
         <div className="p-5">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-full">
               <ChefHat className="h-5 w-5 text-orange-500" />
             </div>
@@ -64,7 +72,31 @@ export default function KitchenProfile() {
             <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">{kitchen.specialty}</p>
           )}
           {kitchen?.description && (
-            <p className="text-sm text-muted-foreground">{kitchen.description}</p>
+            <p className="text-sm text-muted-foreground mb-3">{kitchen.description}</p>
+          )}
+
+          {/* Distance & delivery info */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {distance !== null && (
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
+                outOfRange ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+              }`}>
+                <MapPin className="h-3.5 w-3.5" />
+                يبعد عنك {distance.toFixed(1)} كم
+              </div>
+            )}
+            {!outOfRange && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+                <Truck className="h-3.5 w-3.5" />
+                رسوم التوصيل: {deliveryFee.toFixed(2)} د.أ
+              </div>
+            )}
+          </div>
+
+          {outOfRange && (
+            <div className="mt-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-medium">
+              ⚠️ هذا المطعم خارج نطاق التوصيل (أكثر من {MAX_DELIVERY_KM} كم)
+            </div>
           )}
         </div>
       </div>
@@ -88,9 +120,7 @@ export default function KitchenProfile() {
                 <AlertTriangle className="h-5 w-5" />
                 <h3 className="font-bold">تنبيه</h3>
               </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                يمكنك الطلب من مطبخ واحد في كل مرة.
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">يمكنك الطلب من مطبخ واحد في كل مرة.</p>
               <p className="text-sm mb-5">
                 السلة تحتوي على طلبات من <span className="font-bold text-primary">{conflictKitchen}</span>. هل تريد تفريغ السلة والطلب من <span className="font-bold text-primary">{decodedName}</span>؟
               </p>
@@ -143,10 +173,26 @@ export default function KitchenProfile() {
                 )}
                 <span className="text-base font-extrabold text-primary">{meal.price} <span className="text-xs font-medium">د.أ</span></span>
               </div>
-              <Button size="sm" className="rounded-xl h-9 gap-1 flex-shrink-0" onClick={() => handleAdd(meal)}>
-                <ShoppingCart className="h-3.5 w-3.5" />
-                <span className="text-xs">أضف</span>
-              </Button>
+              <div className="flex flex-col gap-2 flex-shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl h-8 gap-1 px-3 text-green-600 border-green-300"
+                  onClick={() => window.open(buildWhatsAppURL(kitchen?.phone, meal.meal_name), '_blank')}
+                >
+                  <span className="text-sm">💬</span>
+                  <span className="text-xs">واتساب</span>
+                </Button>
+                <Button
+                  size="sm"
+                  className="rounded-xl h-8 gap-1 px-3"
+                  onClick={() => handleAdd(meal)}
+                  disabled={outOfRange}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                  <span className="text-xs">أضف</span>
+                </Button>
+              </div>
             </motion.div>
           ))}
         </div>

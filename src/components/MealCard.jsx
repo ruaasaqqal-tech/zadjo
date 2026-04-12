@@ -1,6 +1,7 @@
 import { Star, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { addToCart } from '@/lib/cartStore';
+import { buildWhatsAppURL } from '@/lib/locationUtils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -22,8 +23,7 @@ export default function MealCard({ meal, index = 0 }) {
   const handleWhatsApp = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const msg = `مرحبا، بدي أطلب: ${meal.meal_name}%0Aالسعر: ${meal.price} دينار%0Aالدفع: كاش عند الاستلام%0Aمن تطبيق لقمة بيت`;
-    window.open(`https://wa.me/962776241441?text=${msg}`, '_blank');
+    window.open(buildWhatsAppURL(meal.phone, meal.meal_name), '_blank');
   };
 
   return (

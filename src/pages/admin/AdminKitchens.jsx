@@ -7,10 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, ChefHat } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChefHat, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EMPTY = { cook_name: '', description: '', image: '', specialty: '', active: true };
+const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', latitude: '', longitude: '', active: true };
 
 export default function AdminKitchens() {
   const queryClient = useQueryClient();
@@ -24,15 +24,20 @@ export default function AdminKitchens() {
   });
 
   const openNew = () => { setForm(EMPTY); setEditing(null); setOpen(true); };
-  const openEdit = (k) => { setForm({ ...k }); setEditing(k.id); setOpen(true); };
+  const openEdit = (k) => { setForm({ ...k, latitude: k.latitude ?? '', longitude: k.longitude ?? '' }); setEditing(k.id); setOpen(true); };
 
   const handleSave = async () => {
     if (!form.cook_name.trim()) { toast.error('اسم المطبخ مطلوب'); return; }
+    const data = {
+      ...form,
+      latitude: form.latitude !== '' ? parseFloat(form.latitude) : null,
+      longitude: form.longitude !== '' ? parseFloat(form.longitude) : null,
+    };
     if (editing) {
-      await base44.entities.Kitchen.update(editing, form);
+      await base44.entities.Kitchen.update(editing, data);
       toast.success('تم التحديث');
     } else {
-      await base44.entities.Kitchen.create(form);
+      await base44.entities.Kitchen.create(data);
       toast.success('تم إضافة المطبخ');
     }
     queryClient.invalidateQueries({ queryKey: ['kitchens-admin'] });
@@ -75,14 +80,19 @@ export default function AdminKitchens() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                   <h3 className="font-bold truncate">{k.cook_name}</h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${k.active ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'}`}>
                     {k.active ? 'نشط' : 'مخفي'}
                   </span>
                 </div>
                 {k.specialty && <p className="text-xs text-orange-600 dark:text-orange-400">{k.specialty}</p>}
-                {k.description && <p className="text-xs text-muted-foreground line-clamp-1">{k.description}</p>}
+                {k.phone && <p className="text-xs text-muted-foreground">📞 {k.phone}</p>}
+                {k.latitude && k.longitude && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />{k.latitude.toFixed(4)}, {k.longitude.toFixed(4)}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -94,7 +104,7 @@ export default function AdminKitchens() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-2xl max-w-md">
+        <DialogContent className="rounded-2xl max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'تعديل المطبخ' : 'إضافة مطبخ جديد'}</DialogTitle>
           </DialogHeader>
@@ -112,8 +122,22 @@ export default function AdminKitchens() {
               <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="rounded-xl mt-1" placeholder="نبذة قصيرة..." />
             </div>
             <div>
+              <Label>رقم الواتساب</Label>
+              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="rounded-xl mt-1" placeholder="962776241441" dir="ltr" />
+            </div>
+            <div>
               <Label>رابط الصورة</Label>
               <Input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} className="rounded-xl mt-1" placeholder="https://..." dir="ltr" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>خط العرض (Lat)</Label>
+                <Input value={form.latitude} onChange={e => setForm({ ...form, latitude: e.target.value })} className="rounded-xl mt-1" placeholder="31.8765" dir="ltr" type="number" step="any" />
+              </div>
+              <div>
+                <Label>خط الطول (Lng)</Label>
+                <Input value={form.longitude} onChange={e => setForm({ ...form, longitude: e.target.value })} className="rounded-xl mt-1" placeholder="35.9876" dir="ltr" type="number" step="any" />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm({ ...form, active: v })} />

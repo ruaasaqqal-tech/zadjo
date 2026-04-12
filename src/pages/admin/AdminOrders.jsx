@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Package, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const STATUSES = ['الكل', 'تم الطلب', 'قيد التحضير', 'في الطريق', 'تم التوصيل', 'ملغي'];
 const STATUS_FLOW = ['تم الطلب', 'قيد التحضير', 'في الطريق', 'تم التوصيل'];
@@ -20,10 +21,26 @@ export default function AdminOrders() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState('الكل');
 
+  const prevCountRef = useRef(null);
+
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['admin-orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 200),
+    refetchInterval: 20000,
   });
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (prevCountRef.current === null) {
+      prevCountRef.current = orders.length;
+      return;
+    }
+    if (orders.length > prevCountRef.current) {
+      const newest = orders[0];
+      toast.success(`🔔 طلب جديد من ${newest?.customer_name || ''}! المبلغ: ${newest?.total?.toFixed(2)} د.أ`, { duration: 8000 });
+    }
+    prevCountRef.current = orders.length;
+  }, [orders, isLoading]);
 
   const filtered = filter === 'الكل' ? orders : orders.filter(o => o.status === filter);
 
