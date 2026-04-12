@@ -23,9 +23,17 @@ export default function KitchenProfile() {
   });
   const kitchen = kitchens[0];
 
+  const kitchenId = kitchen?.id;
   const { data: meals = [], isLoading } = useQuery({
-    queryKey: ['kitchen-meals', decodedName],
-    queryFn: () => base44.entities.Meal.filter({ cook_name: decodedName, available: true }),
+    queryKey: ['kitchen-meals', decodedName, kitchenId],
+    queryFn: async () => {
+      if (kitchenId) {
+        const byId = await base44.entities.Meal.filter({ kitchen_id: kitchenId, available: true });
+        if (byId.length > 0) return byId;
+      }
+      return base44.entities.Meal.filter({ cook_name: decodedName, available: true });
+    },
+    enabled: kitchen !== undefined,
   });
 
   const distance = userLoc && kitchen?.latitude && kitchen?.longitude

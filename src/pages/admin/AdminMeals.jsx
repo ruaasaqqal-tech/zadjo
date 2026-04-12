@@ -14,13 +14,18 @@ import { toast } from 'sonner';
 const CATEGORIES = ['منسف', 'مقلوبة', 'معجنات', 'أكل يومي', 'حلويات', 'مشروبات'];
 const BADGES = ['', 'عرض اليوم', 'الأكثر طلباً', 'جديد'];
 
-const emptyMeal = { meal_name: '', cook_name: '', description: '', price: '', image: '', category: 'أكل يومي', rating: 4.5, badge: '', available: true };
+const emptyMeal = { meal_name: '', cook_name: '', kitchen_id: '', description: '', price: '', image: '', category: 'أكل يومي', rating: 4.5, badge: '', available: true };
 
 export default function AdminMeals() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyMeal);
+
+  const { data: kitchens = [] } = useQuery({
+    queryKey: ['admin-kitchens-list'],
+    queryFn: () => base44.entities.Kitchen.list('-created_date', 100),
+  });
 
   const { data: meals = [], isLoading } = useQuery({
     queryKey: ['admin-meals'],
@@ -30,7 +35,7 @@ export default function AdminMeals() {
   const handleOpen = (meal = null) => {
     if (meal) {
       setEditing(meal);
-      setForm({ ...meal, price: String(meal.price) });
+      setForm({ ...meal, price: String(meal.price), kitchen_id: meal.kitchen_id || '' });
     } else {
       setEditing(null);
       setForm(emptyMeal);
@@ -39,11 +44,17 @@ export default function AdminMeals() {
   };
 
   const handleSave = async () => {
-    if (!form.meal_name || !form.cook_name || !form.price) {
+    if (!form.meal_name || !form.price) {
       toast.error('يرجى تعبئة الحقول المطلوبة');
       return;
     }
-    const data = { ...form, price: Number(form.price), rating: Number(form.rating) || 0 };
+    // auto-fill cook_name from kitchen if not set
+    let cookName = form.cook_name;
+    if (!cookName && form.kitchen_id) {
+      const k = kitchens.find(k => k.id === form.kitchen_id);
+      if (k) cookName = k.cook_name;
+    }
+    const data = { ...form, cook_name: cookName, price: Number(form.price), rating: Number(form.rating) || 0 };
     if (editing) {
       await base44.entities.Meal.update(editing.id, data);
       toast.success('تم تحديث الوجبة');
@@ -133,8 +144,14 @@ export default function AdminMeals() {
               <Input value={form.meal_name} onChange={e => setForm({ ...form, meal_name: e.target.value })} className="rounded-xl mt-1" />
             </div>
             <div>
-              <Label>اسم الطباخة *</Label>
-              <Input value={form.cook_name} onChange={e => setForm({ ...form, cook_name: e.target.value })} className="rounded-xl mt-1" />
+              <Label>المطبخ *</Label>
+              <Select value={form.kitchen_id} onValueChange={v => {
+                const k = kitchens.find(k => k.id === v);
+                setForm({ ...form, kitchen_id: v, cook_name: k ? k.cook_name : form.cook_name });
+              }}>
+                <SelectTrigger className="rounded-xl mt-1"><SelectValue placeholder="اختر مطبخاً" /></SelectTrigger>
+                <SelectContent>{kitchens.map(k => <SelectItem key={k.id} value={k.id}>{k.cook_name}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div>
               <Label>الوصف</Label>
