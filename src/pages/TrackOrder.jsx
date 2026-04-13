@@ -22,10 +22,12 @@ function CancelCountdown({ order, onCancel }) {
   });
 
   useEffect(() => {
-    if (secondsLeft <= 0) return;
-    const t = setInterval(() => setSecondsLeft(s => Math.max(0, s - 1)), 1000);
+    const t = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - new Date(order.created_date).getTime()) / 1000);
+      setSecondsLeft(Math.max(0, 300 - elapsed));
+    }, 1000);
     return () => clearInterval(t);
-  }, [secondsLeft]);
+  }, [order.created_date]);
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const ss = String(secondsLeft % 60).padStart(2, '0');

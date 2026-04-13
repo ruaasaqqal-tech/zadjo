@@ -114,13 +114,17 @@ export default function Cart() {
       } catch (e) { /* ignore */ }
     }
 
-    // Send email notification
+    // Send email notification (awaited to ensure delivery)
     const itemsText = cart.map(i => `- ${i.meal_name} × ${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`).join('\n');
-    base44.integrations.Core.SendEmail({
-      to: 'lugmabait@gmail.com',
-      subject: `طلب جديد من ${customerName}`,
-      body: `اسم العميل: ${customerName}\nرقم الهاتف: ${customerPhone}\nالعنوان: ${form.address}\n\nالوجبات:\n${itemsText}\n\nالمجموع الكلي: ${total.toFixed(2)} د.أ\nوقت الطلب: ${new Date().toLocaleString('ar-JO')}`,
-    }).catch(() => {});
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: 'lugmabait@gmail.com',
+        subject: `🍽️ طلب جديد من ${customerName}`,
+        body: `اسم العميل: ${customerName}\nرقم الهاتف: ${customerPhone}\nالعنوان: ${form.address}\n\nالوجبات:\n${itemsText}\n\nالمجموع الفرعي: ${subtotal.toFixed(2)} د.أ\nالتوصيل: ${deliveryFee.toFixed(2)} د.أ${discount > 0 ? `\nالخصم: -${discount.toFixed(2)} د.أ` : ''}\nالمجموع الكلي: ${total.toFixed(2)} د.أ\nوقت الطلب: ${new Date().toLocaleString('ar-JO')}`,
+      });
+    } catch (e) {
+      console.error('Email send failed:', e);
+    }
 
     clearCart();
     setSubmitting(false);
