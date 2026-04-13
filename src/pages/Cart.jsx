@@ -9,6 +9,7 @@ import { getCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getCa
 import { calcDistance, calcDeliveryFee } from '@/lib/locationUtils';
 import useUserLocation from '@/hooks/useUserLocation';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,9 +19,10 @@ export default function Cart() {
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [discountInfo, setDiscountInfo] = useState(null);
-  const [form, setForm] = useState({ customer_name: '', phone: '', address: '', notes: '' });
+  const [form, setForm] = useState({ address: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { location: userLoc } = useUserLocation();
 
   const kitchenName = getCartKitchen(cart);
@@ -68,19 +70,17 @@ export default function Cart() {
   };
 
   const handleSubmit = async () => {
-    if (!form.customer_name || !form.phone || !form.address) {
-      toast.error('يرجى تعبئة جميع الحقول المطلوبة');
+    if (!form.address) {
+      toast.error('يرجى إدخال العنوان');
       return;
     }
-    if (cart.length === 0) {
-      toast.error('السلة فارغة');
-      return;
-    }
+    const customerName = user?.full_name || 'عميل';
+    const customerPhone = user?.phone || '';
     setSubmitting(true);
     const kitchenName = getCartKitchen(cart);
     const order = await base44.entities.Order.create({
-      customer_name: form.customer_name,
-      phone: form.phone,
+      customer_name: customerName,
+      phone: customerPhone,
       address: form.address,
       notes: form.notes,
       kitchen_name: kitchenName || '',
@@ -90,6 +90,7 @@ export default function Cart() {
         cook_name: item.cook_name,
         price: item.price,
         quantity: item.quantity,
+        addons_label: item.addons_label || '',
       })),
       subtotal,
       discount,
@@ -112,6 +113,14 @@ export default function Cart() {
         }
       } catch (e) { /* ignore */ }
     }
+
+    // Send email notification
+    const itemsText = cart.map(i => `- ${i.meal_name} × ${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`).join('\n');
+    base44.integrations.Core.SendEmail({
+      to: 'lugmabait@gmail.com',
+      subject: `طلب جديد من ${customerName}`,
+      body: `اسم العميل: ${customerName}\nرقم الهاتف: ${customerPhone}\nالعنوان: ${form.address}\n\nالوجبات:\n${itemsText}\n\nالمجموع الكلي: ${total.toFixed(2)} د.أ\nوقت الطلب: ${new Date().toLocaleString('ar-JO')}`,
+    }).catch(() => {});
 
     clearCart();
     setSubmitting(false);
@@ -194,14 +203,12 @@ export default function Cart() {
       {/* Order Form */}
       <div className="bg-card rounded-2xl p-6 border border-border/50 mb-6 space-y-4">
         <h2 className="font-bold text-lg">بيانات التوصيل</h2>
-        <div>
-          <Label>الاسم *</Label>
-          <Input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="rounded-xl mt-1" placeholder="اسمك الكامل" />
-        </div>
-        <div>
-          <Label>رقم الهاتف *</Label>
-          <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-xl mt-1" placeholder="07xxxxxxxx" dir="ltr" />
-        </div>
+        {user && (
+          <div className="bg-muted/40 rounded-xl px-4 py-3 text-sm">
+            <p className="font-medium">{user.full_name}</p>
+            {user.phone && <p className="text-muted-foreground">{user.phone}</p>}
+          </div>
+        )}
         <div>
           <Label>العنوان *</Label>
           <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="rounded-xl mt-1" placeholder="العنوان بالتفصيل" />

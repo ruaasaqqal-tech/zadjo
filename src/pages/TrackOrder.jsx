@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Package, Clock, Truck, CheckCircle, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 const STATUS_STEPS = [
   { key: 'تم الطلب', label: 'تم الطلب', icon: Package },
@@ -13,8 +15,38 @@ const STATUS_STEPS = [
   { key: 'تم التوصيل', label: 'تم التوصيل', icon: CheckCircle },
 ];
 
+function CancelCountdown({ order, onCancel }) {
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const elapsed = Math.floor((Date.now() - new Date(order.created_date).getTime()) / 1000);
+    return Math.max(0, 300 - elapsed);
+  });
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const t = setInterval(() => setSecondsLeft(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [secondsLeft]);
+
+  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const ss = String(secondsLeft % 60).padStart(2, '0');
+
+  if (secondsLeft <= 0) {
+    return <p className="text-xs text-muted-foreground text-center mt-2">لا يمكن إلغاء الطلب بعد الآن</p>;
+  }
+
+  return (
+    <div className="border-t border-border pt-4 mt-2">
+      <p className="text-xs text-muted-foreground text-center mb-2">يمكنك الإلغاء خلال {mm}:{ss}</p>
+      <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/40" onClick={onCancel}>
+        إلغاء الطلب
+      </Button>
+    </div>
+  );
+}
+
 export default function TrackOrder() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', user?.email],
@@ -24,6 +56,13 @@ export default function TrackOrder() {
 
   const order = orders[0] || null;
   const currentStepIdx = STATUS_STEPS.findIndex(s => s.key === order?.status);
+
+  const handleCancel = async () => {
+    if (!order) return;
+    await base44.entities.Order.update(order.id, { status: 'ملغي' });
+    queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+    toast.success('تم إلغاء الطلب');
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
@@ -118,6 +157,9 @@ export default function TrackOrder() {
               </div>
             )}
           </div>
+          {order.status === 'تم الطلب' && (
+            <CancelCountdown order={order} onCancel={handleCancel} />
+          )}
         </motion.div>
       )}
     </div>
