@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useParams } from 'react-router-dom';
-import { ChefHat, Star, ShoppingCart, AlertTriangle, MapPin, Truck } from 'lucide-react';
+import { ChefHat, AlertTriangle, MapPin, Truck, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addToCartWithKitchenCheck, clearCart } from '@/lib/cartStore';
+import { clearCart, addToCartWithKitchenCheck } from '@/lib/cartStore';
+import MealDetailModal from '@/components/MealDetailModal';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import useUserLocation from '@/hooks/useUserLocation';
@@ -15,6 +16,7 @@ export default function KitchenProfile() {
   const decodedName = decodeURIComponent(cookName);
   const [conflictMeal, setConflictMeal] = useState(null);
   const [conflictKitchen, setConflictKitchen] = useState('');
+  const [selectedMeal, setSelectedMeal] = useState(null);
   const { location: userLoc } = useUserLocation();
 
   const { data: kitchens = [] } = useQuery({
@@ -42,14 +44,9 @@ export default function KitchenProfile() {
   const outOfRange = distance !== null && distance > MAX_DELIVERY_KM;
   const deliveryFee = calcDeliveryFee(distance);
 
-  const handleAdd = (meal) => {
-    const result = addToCartWithKitchenCheck(meal, decodedName);
-    if (result.conflict) {
-      setConflictMeal(meal);
-      setConflictKitchen(result.currentKitchen);
-    } else {
-      toast.success(`تمت إضافة ${meal.meal_name} إلى السلة`);
-    }
+  const handleConflict = (meal, currentKitchen) => {
+    setConflictMeal(meal);
+    setConflictKitchen(currentKitchen);
   };
 
   const handleClearAndAdd = () => {
@@ -58,6 +55,7 @@ export default function KitchenProfile() {
     toast.success(`تمت إضافة ${conflictMeal.meal_name} إلى السلة`);
     setConflictMeal(null);
     setConflictKitchen('');
+    setSelectedMeal(null);
   };
 
   return (
@@ -111,6 +109,14 @@ export default function KitchenProfile() {
 
       {/* Conflict Dialog */}
       <AnimatePresence>
+        {selectedMeal && (
+          <MealDetailModal
+            meal={selectedMeal}
+            kitchenName={decodedName}
+            onClose={() => setSelectedMeal(null)}
+            onConflict={handleConflict}
+          />
+        )}
         {conflictMeal && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -160,7 +166,8 @@ export default function KitchenProfile() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-card rounded-2xl border border-border/50 overflow-hidden flex items-center gap-4 p-3 shadow-sm"
+              className="bg-card rounded-2xl border border-border/50 overflow-hidden flex items-center gap-4 p-3 shadow-sm cursor-pointer hover:border-primary/40 transition-colors"
+              onClick={() => setSelectedMeal(meal)}
             >
               <img
                 src={meal.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'}
@@ -186,7 +193,7 @@ export default function KitchenProfile() {
                   size="sm"
                   variant="outline"
                   className="rounded-xl h-8 gap-1 px-3 text-green-600 border-green-300"
-                  onClick={() => window.open(buildWhatsAppURL(kitchen?.phone, meal.meal_name), '_blank')}
+                  onClick={(e) => { e.stopPropagation(); window.open(buildWhatsAppURL(kitchen?.phone, meal.meal_name), '_blank'); }}
                 >
                   <span className="text-sm">💬</span>
                   <span className="text-xs">واتساب</span>
@@ -194,10 +201,9 @@ export default function KitchenProfile() {
                 <Button
                   size="sm"
                   className="rounded-xl h-8 gap-1 px-3"
-                  onClick={() => handleAdd(meal)}
+                  onClick={(e) => { e.stopPropagation(); setSelectedMeal(meal); }}
                   disabled={outOfRange}
                 >
-                  <ShoppingCart className="h-3.5 w-3.5" />
                   <span className="text-xs">أضف</span>
                 </Button>
               </div>
