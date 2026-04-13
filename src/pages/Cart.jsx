@@ -69,6 +69,8 @@ export default function Cart() {
     toast.success(`تم تطبيق الخصم: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
   };
 
+  const BUSINESS_WHATSAPP = '962790607665'; // رقم واتساب المطبخ
+
   const handleSubmit = async () => {
     if (!form.address) {
       toast.error('يرجى إدخال العنوان');
@@ -76,6 +78,12 @@ export default function Cart() {
     }
     const customerName = user?.full_name || 'عميل';
     const customerPhone = user?.phone || '';
+
+    if (!customerPhone) {
+      toast.error('يرجى إضافة رقم هاتفك في صفحة الملف الشخصي قبل تأكيد الطلب');
+      return;
+    }
+
     setSubmitting(true);
     const kitchenName = getCartKitchen(cart);
     const order = await base44.entities.Order.create({
@@ -104,7 +112,6 @@ export default function Cart() {
       await base44.entities.Coupon.update(discountInfo.id, { usage_count: (discountInfo.usage_count || 0) + 1 });
     }
 
-    // Update orders_count for each meal
     for (const item of cart) {
       try {
         const meals = await base44.entities.Meal.filter({ id: item.meal_id });
@@ -114,21 +121,32 @@ export default function Cart() {
       } catch (e) { /* ignore */ }
     }
 
-    // Send email notification (awaited to ensure delivery)
-    const itemsText = cart.map(i => `- ${i.meal_name} × ${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`).join('\n');
-    try {
-      await base44.integrations.Core.SendEmail({
-        to: 'lugmabait@gmail.com',
-        subject: `🍽️ طلب جديد من ${customerName}`,
-        body: `اسم العميل: ${customerName}\nرقم الهاتف: ${customerPhone}\nالعنوان: ${form.address}\n\nالوجبات:\n${itemsText}\n\nالمجموع الفرعي: ${subtotal.toFixed(2)} د.أ\nالتوصيل: ${deliveryFee.toFixed(2)} د.أ${discount > 0 ? `\nالخصم: -${discount.toFixed(2)} د.أ` : ''}\nالمجموع الكلي: ${total.toFixed(2)} د.أ\nوقت الطلب: ${new Date().toLocaleString('ar-JO')}`,
-      });
-    } catch (e) {
-      console.error('Email send failed:', e);
-    }
+    // Build WhatsApp message
+    const itemsLines = cart.map(i =>
+      `- ${i.meal_name} ×${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`
+    ).join('\n');
+    const waMsg = [
+      `🛒 *طلب جديد*`,
+      `الاسم: ${customerName}`,
+      `الهاتف: ${customerPhone}`,
+      `العنوان: ${form.address}`,
+      ``,
+      `*الوجبات:*`,
+      itemsLines,
+      ``,
+      `التوصيل: ${deliveryFee.toFixed(2)} د.أ`,
+      discount > 0 ? `الخصم: -${discount.toFixed(2)} د.أ` : null,
+      `*المجموع: ${total.toFixed(2)} د.أ*`,
+      form.notes ? `ملاحظات: ${form.notes}` : null,
+      `وقت الطلب: ${new Date().toLocaleString('ar-JO')}`,
+    ].filter(Boolean).join('\n');
+
+    const waUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
     clearCart();
     setSubmitting(false);
-    toast.success('تم إرسال طلبك بنجاح!');
+    toast.success('تم تأكيد طلبك! سيتم تحويلك لواتساب...');
+    setTimeout(() => window.open(waUrl, '_blank'), 800);
     navigate(`/order-success/${order.id}`);
   };
 

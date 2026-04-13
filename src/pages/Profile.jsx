@@ -2,14 +2,27 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/AuthContext';
-import { Trash2, UserCircle } from 'lucide-react';
+import { Trash2, UserCircle, Phone } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [savingPhone, setSavingPhone] = useState(false);
+
+  const handleSavePhone = async () => {
+    if (!phone.trim()) return;
+    setSavingPhone(true);
+    await base44.auth.updateMe({ phone: phone.trim() });
+    setSavingPhone(false);
+    toast.success('تم حفظ رقم الهاتف');
+  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -28,6 +41,28 @@ export default function Profile() {
         <div>
           <p className="font-bold text-lg">{user?.full_name || 'المستخدم'}</p>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
+        </div>
+      </div>
+
+      {/* Phone number */}
+      <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm mb-6">
+        <h2 className="font-bold mb-1 flex items-center gap-2">
+          <Phone className="h-4 w-4" /> رقم الهاتف
+        </h2>
+        {!user?.phone && (
+          <p className="text-xs text-amber-600 mb-3">⚠️ يجب إضافة رقم هاتفك لتتمكن من تأكيد الطلبات</p>
+        )}
+        <div className="flex gap-2">
+          <Input
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            placeholder="07xxxxxxxx"
+            dir="ltr"
+            className="rounded-xl"
+          />
+          <Button onClick={handleSavePhone} disabled={savingPhone} className="rounded-xl px-5">
+            {savingPhone ? '...' : 'حفظ'}
+          </Button>
         </div>
       </div>
 
