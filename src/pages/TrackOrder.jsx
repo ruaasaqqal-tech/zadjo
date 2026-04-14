@@ -1,12 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Package, Clock, Truck, CheckCircle, ShoppingBag } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Package, Clock, Truck, CheckCircle, ShoppingBag, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import ReviewModal from '@/components/ReviewModal';
 
 const STATUS_STEPS = [
   { key: 'تم الطلب', label: 'تم الطلب', icon: Package },
@@ -32,49 +33,62 @@ function CancelCountdown({ order, onCancel }) {
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const ss = String(secondsLeft % 60).padStart(2, '0');
 
-  if (secondsLeft <= 0) {
-    return <p className="text-xs text-muted-foreground text-center mt-2">لا يمكن إلغاء الطلب بعد الآن</p>;
-  }
+  if (secondsLeft <= 0) return null;
 
   return (
-    <div className="border-t border-border pt-4 mt-2">
-      <p className="text-xs text-muted-foreground text-center mb-2">يمكنك الإلغاء خلال {mm}:{ss}</p>
-      <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/40" onClick={onCancel}>
-        إلغاء الطلب
-      </Button>
-    </div>
+    <Button
+      size="sm"
+      variant="outline"
+      className="rounded-xl text-destructive border-destructive/40 gap-1"
+      onClick={onCancel}
+    >
+      إلغاء ({mm}:{ss})
+    </Button>
   );
 }
 
 export default function TrackOrder() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [reviewOrder, setReviewOrder] = useState(null);
+  const [reviewedIds, setReviewedIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('reviewed_orders') || '[]'); } catch { return []; }
+  });
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({ created_by: user?.email }, '-created_date', 1),
+    queryFn: () => base44.entities.Order.filter({ created_by: user?.email }, '-created_date', 20),
     enabled: !!user?.email,
+    refetchInterval: 15000,
   });
 
-  const order = orders[0] || null;
-  const currentStepIdx = STATUS_STEPS.findIndex(s => s.key === order?.status);
-
-  const handleCancel = async () => {
+  const handleCancel = async (order) => {
     if (!order) return;
+    const elapsed = Date.now() - new Date(order.created_date).getTime();
+    if (elapsed >= 300000) {
+      toast.error('انتهت مدة الإلغاء (5 دقائق)');
+      return;
+    }
     await base44.entities.Order.update(order.id, { status: 'ملغي' });
     queryClient.invalidateQueries({ queryKey: ['my-orders'] });
     toast.success('تم إلغاء الطلب');
   };
 
+  const handleReviewDone = (orderId) => {
+    const updated = [...reviewedIds, orderId];
+    setReviewedIds(updated);
+    localStorage.setItem('reviewed_orders', JSON.stringify(updated));
+  };
+
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6 text-center">تتبع طلبك</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">طلباتي</h1>
 
       {isLoading && (
         <div className="text-center text-muted-foreground py-12">جاري التحميل...</div>
       )}
 
-      {!isLoading && !order && (
+      {!isLoading && orders.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -89,81 +103,107 @@ export default function TrackOrder() {
         </motion.div>
       )}
 
-      {order && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm space-y-5"
-        >
-          {order.kitchen_name && (
-            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-1">
-              <span className="text-lg">🏠</span>
-              <div>
-                <p className="text-xs text-muted-foreground">طلبك من</p>
-                <p className="text-sm font-bold text-orange-700 dark:text-orange-400">{order.kitchen_name}</p>
-              </div>
-            </div>
-          )}
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-primary">{order.total?.toFixed(2)} د.أ</span>
-          </div>
+      <div className="space-y-4">
+        {orders.map((order) => {
+          const currentStepIdx = STATUS_STEPS.findIndex(s => s.key === order.status);
+          const canCancel = order.status === 'تم الطلب' && (Date.now() - new Date(order.created_date).getTime()) < 300000;
+          const isDelivered = order.status === 'تم التوصيل';
+          const alreadyReviewed = reviewedIds.includes(order.id);
 
-          {/* Status tracker */}
-          <div>
-            {STATUS_STEPS.map((step, i) => {
-              const Icon = step.icon;
-              const isActive = i <= currentStepIdx;
-              const isCurrent = i === currentStepIdx;
-              return (
-                <div key={step.key} className="flex items-center gap-4 mb-4 last:mb-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                  } ${isCurrent ? 'ring-4 ring-primary/20' : ''}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className={`text-sm font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {step.label}
-                  </span>
-                  {isCurrent && (
-                    <span className="mr-auto text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">الحالة الحالية</span>
+          return (
+            <motion.div
+              key={order.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm space-y-4"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-start">
+                <div>
+                  {order.kitchen_name && (
+                    <p className="text-sm font-bold text-orange-600 dark:text-orange-400">🏠 {order.kitchen_name}</p>
                   )}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {order.created_date ? new Date(order.created_date).toLocaleString('ar-JO') : ''}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Items */}
-          <div className="border-t border-border pt-4">
-            <h4 className="font-medium text-sm mb-3">تفاصيل الطلب</h4>
-            {order.items?.map((item, i) => (
-              <div key={i} className="flex justify-between text-sm py-1.5">
-                <span>{item.meal_name} × {item.quantity}</span>
-                <span className="text-muted-foreground">{(item.price * item.quantity).toFixed(2)} د.أ</span>
+                <span className="text-lg font-extrabold text-primary">{order.total?.toFixed(2)} د.أ</span>
               </div>
-            ))}
-          </div>
 
-          <div className="border-t border-border pt-3 text-sm space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">العنوان</span>
-              <span className="text-right max-w-[60%]">{order.address}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">الدفع</span>
-              <span>نقداً عند الاستلام</span>
-            </div>
-            {order.discount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">الخصم</span>
-                <span className="text-green-600">- {order.discount?.toFixed(2)} د.أ</span>
+              {/* Status tracker */}
+              {order.status !== 'ملغي' ? (
+                <div className="flex items-center gap-1">
+                  {STATUS_STEPS.map((step, i) => {
+                    const Icon = step.icon;
+                    const isActive = i <= currentStepIdx;
+                    const isCurrent = i === currentStepIdx;
+                    return (
+                      <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground/40'
+                        } ${isCurrent ? 'ring-4 ring-primary/20' : ''}`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        {i < STATUS_STEPS.length - 1 && (
+                          <div className={`flex-1 h-0.5 mx-1 ${i < currentStepIdx ? 'bg-primary' : 'bg-muted'}`} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">ملغي</span>
+              )}
+
+              {/* Items */}
+              <div className="bg-muted/40 rounded-xl p-3">
+                {order.items?.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm py-0.5">
+                    <span>{item.meal_name} × {item.quantity}</span>
+                    <span className="text-muted-foreground">{(item.price * item.quantity).toFixed(2)} د.أ</span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-          {order.status === 'تم الطلب' && (
-            <CancelCountdown order={order} onCancel={handleCancel} />
-          )}
-        </motion.div>
-      )}
+
+              <div className="text-xs text-muted-foreground">📍 {order.address}</div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                {canCancel && (
+                  <CancelCountdown order={order} onCancel={() => handleCancel(order)} />
+                )}
+                {isDelivered && !alreadyReviewed && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl gap-1 text-amber-600 border-amber-300"
+                    onClick={() => setReviewOrder(order)}
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                    قيّم الطلب
+                  </Button>
+                )}
+                {isDelivered && alreadyReviewed && (
+                  <span className="text-xs text-emerald-600 flex items-center gap-1">
+                    <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
+                    تم التقييم
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {reviewOrder && (
+          <ReviewModal
+            order={reviewOrder}
+            onClose={() => setReviewOrder(null)}
+            onDone={() => handleReviewDone(reviewOrder.id)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

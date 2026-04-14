@@ -48,15 +48,23 @@ export default function Cart() {
   const total = Math.max(0, subtotal - discount + deliveryFee);
 
   const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    const coupons = await base44.entities.Coupon.filter({ code: couponCode.trim().toUpperCase(), active: true });
-    if (coupons.length === 0) {
-      toast.error('كود الخصم غير صالح');
+    const trimmed = couponCode.trim().toUpperCase();
+    if (!trimmed) return;
+    if (discountInfo && discountInfo.code === trimmed) {
+      toast.error('تم تطبيق هذا الكوبون مسبقاً');
+      return;
+    }
+    // Fetch all active coupons and match case-insensitively
+    const allCoupons = await base44.entities.Coupon.list();
+    const coupon = allCoupons.find(
+      c => c.code?.trim().toUpperCase() === trimmed && c.active !== false
+    );
+    if (!coupon) {
+      toast.error('كود الخصم غير صالح أو منتهي الصلاحية');
       setDiscount(0);
       setDiscountInfo(null);
       return;
     }
-    const coupon = coupons[0];
     if (coupon.min_order && subtotal < coupon.min_order) {
       toast.error(`الحد الأدنى للطلب ${coupon.min_order} د.أ`);
       return;
@@ -66,7 +74,7 @@ export default function Cart() {
       : coupon.discount_value;
     setDiscount(d);
     setDiscountInfo(coupon);
-    toast.success(`تم تطبيق الخصم: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
+    toast.success(`✅ تم تطبيق الخصم: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
   };
 
   const BUSINESS_WHATSAPP = '962790607665'; // رقم واتساب المطبخ
