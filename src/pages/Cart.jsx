@@ -94,8 +94,29 @@ export default function Cart() {
 
     setSubmitting(true);
     const kitchenName = getCartKitchen(cart);
-    const order = await base44.entities.Order.create({
-      customer_name: customerName,
+const order = await base44.entities.Order.create({...});
+
+// 👇 حطي الكود هون مباشرة
+try {
+  await fetch('https://hooks.zapier.com/hooks/catch/27207388/u7pm7mu/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: customerName,
+      phone: customerPhone,
+      meals: cart.map(i => ({
+        name: i.meal_name,
+        quantity: i.quantity,
+        price: i.price
+      })),
+      addons: cart.flatMap(i => i.addons_label ? [i.addons_label] : []),
+      total,
+      timestamp: new Date().toISOString(),
+    }),
+  });
+} catch (e) {
+  console.log("Zapier error:", e);
+}      customer_name: customerName,
       phone: customerPhone,
       address: form.address,
       notes: form.notes,
