@@ -8,15 +8,16 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import ReviewModal from '@/components/ReviewModal';
+import { useLang } from '@/lib/i18n';
 
 const STATUS_STEPS = [
-  { key: 'تم الطلب', label: 'تم الطلب', icon: Package },
-  { key: 'قيد التحضير', label: 'قيد التحضير', icon: Clock },
-  { key: 'في الطريق', label: 'في الطريق', icon: Truck },
-  { key: 'تم التوصيل', label: 'تم التوصيل', icon: CheckCircle },
+  { key: 'تم الطلب', icon: Package },
+  { key: 'قيد التحضير', icon: Clock },
+  { key: 'في الطريق', icon: Truck },
+  { key: 'تم التوصيل', icon: CheckCircle },
 ];
 
-function CancelCountdown({ order, onCancel }) {
+function CancelCountdown({ order, onCancel, label }) {
   const [secondsLeft, setSecondsLeft] = useState(() => {
     const elapsed = Math.floor((Date.now() - new Date(order.created_date).getTime()) / 1000);
     return Math.max(0, 300 - elapsed);
@@ -42,12 +43,13 @@ function CancelCountdown({ order, onCancel }) {
       className="rounded-xl text-destructive border-destructive/40 gap-1"
       onClick={onCancel}
     >
-      إلغاء ({mm}:{ss})
+      {label} ({mm}:{ss})
     </Button>
   );
 }
 
 export default function TrackOrder() {
+  const { t } = useLang();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [reviewOrder, setReviewOrder] = useState(null);
@@ -66,12 +68,12 @@ export default function TrackOrder() {
     if (!order) return;
     const elapsed = Date.now() - new Date(order.created_date).getTime();
     if (elapsed >= 300000) {
-      toast.error('انتهت مدة الإلغاء (5 دقائق)');
+      toast.error(t('cancelExpired'));
       return;
     }
     await base44.entities.Order.update(order.id, { status: 'ملغي' });
     queryClient.invalidateQueries({ queryKey: ['my-orders'] });
-    toast.success('تم إلغاء الطلب');
+    toast.success(t('orderCancelled'));
   };
 
   const handleReviewDone = (orderId) => {
@@ -82,10 +84,10 @@ export default function TrackOrder() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6 text-center">طلباتي</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">{t('myOrders')}</h1>
 
       {isLoading && (
-        <div className="text-center text-muted-foreground py-12">جاري التحميل...</div>
+        <div className="text-center text-muted-foreground py-12">{t('loading')}</div>
       )}
 
       {!isLoading && orders.length === 0 && (
@@ -95,10 +97,10 @@ export default function TrackOrder() {
           className="text-center py-16"
         >
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-lg font-medium text-muted-foreground">لا يوجد لديك طلبات حالياً</p>
-          <p className="text-sm text-muted-foreground mt-1 mb-6">اطلب وجبتك المفضلة الآن!</p>
+          <p className="text-lg font-medium text-muted-foreground">{t('noOrders')}</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">{t('noOrdersDesc')}</p>
           <Link to="/menu">
-            <Button className="rounded-2xl px-8">تصفح القائمة</Button>
+            <Button className="rounded-2xl px-8">{t('browseMenu')}</Button>
           </Link>
         </motion.div>
       )}
@@ -170,7 +172,7 @@ export default function TrackOrder() {
               {/* Actions */}
               <div className="flex gap-2">
                 {canCancel && (
-                  <CancelCountdown order={order} onCancel={() => handleCancel(order)} />
+                  <CancelCountdown order={order} onCancel={() => handleCancel(order)} label={t('cancelOrder')} />
                 )}
                 {isDelivered && !alreadyReviewed && (
                   <Button
@@ -180,13 +182,13 @@ export default function TrackOrder() {
                     onClick={() => setReviewOrder(order)}
                   >
                     <Star className="h-3.5 w-3.5" />
-                    قيّم الطلب
+                    {t('rateOrder')}
                   </Button>
                 )}
                 {isDelivered && alreadyReviewed && (
                   <span className="text-xs text-emerald-600 flex items-center gap-1">
                     <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
-                    تم التقييم
+                    {t('rated')}
                   </span>
                 )}
               </div>

@@ -2,16 +2,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, UtensilsCrossed, ShoppingCart, MapPin } from 'lucide-react';
 import { getCart, getCartCount } from '@/lib/cartStore';
 import { useState, useEffect } from 'react';
-
-const TABS = [
-  { path: '/', label: 'الرئيسية', icon: Home },
-  { path: '/menu', label: 'القائمة', icon: UtensilsCrossed },
-  { path: '/cart', label: 'السلة', icon: ShoppingCart },
-  { path: '/track-order', label: 'تتبع', icon: MapPin },
-];
+import { useLang } from '@/lib/i18n';
 
 export default function BottomTabs() {
   const { pathname } = useLocation();
+  const { t } = useLang();
   const [cart, setCart] = useState(getCart());
 
   useEffect(() => {
@@ -21,6 +16,13 @@ export default function BottomTabs() {
   }, []);
 
   const count = getCartCount(cart);
+
+  const TABS = [
+    { path: '/', label: t('home'), icon: Home },
+    { path: '/menu', label: t('menu'), icon: UtensilsCrossed },
+    { path: '/cart', label: t('cart'), icon: ShoppingCart },
+    { path: '/track-order', label: t('trackOrder'), icon: MapPin },
+  ];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex"

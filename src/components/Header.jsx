@@ -4,8 +4,10 @@ import { ShoppingCart, Menu, X, ArrowRight, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCart, getCartCount } from '@/lib/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLang } from '@/lib/i18n';
 
 export default function Header() {
+  const { t, lang, switchLang } = useLang();
   const [cart, setCart] = useState(getCart());
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
@@ -32,17 +34,24 @@ export default function Header() {
           <span className="text-2xl">🍲</span>
           <div>
             <h1 className="text-lg font-bold text-foreground leading-tight">لقمة بيت</h1>
-            <p className="text-[10px] text-muted-foreground leading-none">أكل بيتي طازج</p>
+            <p className="text-[10px] text-muted-foreground leading-none">{t('freshFood')}</p>
           </div>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">الرئيسية</Link>
-          <Link to="/menu" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">القائمة</Link>
-          <Link to="/track-order" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">تتبع طلبك</Link>
+          <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">{t('home')}</Link>
+          <Link to="/menu" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">{t('menu')}</Link>
+          <Link to="/track-order" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">{t('trackYourOrder')}</Link>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Language Toggle */}
+          <button
+            onClick={() => switchLang(lang === 'ar' ? 'en' : 'ar')}
+            className="hidden md:flex items-center text-xs font-bold px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors select-none"
+          >
+            {lang === 'ar' ? 'EN' : 'AR'}
+          </button>
           <Link to="/profile" className="hidden md:flex">
             <Button variant="ghost" size="icon"><UserCircle className="h-5 w-5" /></Button>
           </Link>
@@ -75,10 +84,16 @@ export default function Header() {
             className="md:hidden border-t border-border overflow-hidden bg-card"
           >
             <nav className="flex flex-col p-4 gap-3">
-              <Link to="/" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">الرئيسية</Link>
-              <Link to="/menu" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">القائمة</Link>
-              <Link to="/track-order" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">تتبع طلبك</Link>
-              <Link to="/profile" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">حسابي</Link>
+              <Link to="/" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">{t('home')}</Link>
+              <Link to="/menu" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">{t('menu')}</Link>
+              <Link to="/track-order" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">{t('trackYourOrder')}</Link>
+              <Link to="/profile" onClick={() => setMenuOpen(false)} className="text-sm font-medium py-2 hover:text-primary transition-colors">{t('myAccount')}</Link>
+              <button
+                onClick={() => { switchLang(lang === 'ar' ? 'en' : 'ar'); setMenuOpen(false); }}
+                className="text-sm font-bold py-2 text-start hover:text-primary transition-colors select-none"
+              >
+                {lang === 'ar' ? '🌐 English' : '🌐 العربية'}
+              </button>
             </nav>
           </motion.div>
         )}

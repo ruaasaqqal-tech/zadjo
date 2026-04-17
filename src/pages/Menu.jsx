@@ -5,8 +5,10 @@ import { base44 } from '@/api/base44Client';
 import SearchBar from '../components/SearchBar';
 import CategoryBar from '../components/CategoryBar';
 import MealSection from '../components/MealSection';
+import { useLang } from '@/lib/i18n';
 
 export default function Menu() {
+  const { t } = useLang();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
@@ -25,12 +27,12 @@ export default function Menu() {
   return (
     <PullToRefresh onRefresh={refetch}>
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6">القائمة الكاملة</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('fullMenu')}</h1>
       <div className="space-y-4 mb-6">
         <SearchBar value={search} onChange={setSearch} />
         <CategoryBar selected={category} onSelect={setCategory} />
       </div>
-      <MealSection title={`${filtered.length} وجبة متاحة`} meals={filtered} loading={isLoading} showAll />
+      <MealSection title={`${filtered.length} ${t('mealsAvailable')}`} meals={filtered} loading={isLoading} showAll />
     </div>
     </PullToRefresh>
   );

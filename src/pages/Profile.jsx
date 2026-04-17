@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/AuthContext';
 import { Trash2, UserCircle, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLang } from '@/lib/i18n';
 
 export default function Profile() {
+  const { t } = useLang();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
@@ -21,7 +23,7 @@ export default function Profile() {
     setSavingPhone(true);
     await base44.auth.updateMe({ phone: phone.trim() });
     setSavingPhone(false);
-    toast.success('تم حفظ رقم الهاتف');
+    toast.success(t('phoneSaved'));
   };
 
   const handleDelete = async () => {
@@ -47,10 +49,10 @@ export default function Profile() {
       {/* Phone number */}
       <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm mb-6">
         <h2 className="font-bold mb-1 flex items-center gap-2">
-          <Phone className="h-4 w-4" /> رقم الهاتف
+          <Phone className="h-4 w-4" /> {t('phoneNumber')}
         </h2>
         {!user?.phone && (
-          <p className="text-xs text-amber-600 mb-3">⚠️ يجب إضافة رقم هاتفك لتتمكن من تأكيد الطلبات</p>
+          <p className="text-xs text-amber-600 mb-3">{t('phoneWarning')}</p>
         )}
         <div className="flex gap-2">
           <Input
@@ -61,30 +63,30 @@ export default function Profile() {
             className="rounded-xl"
           />
           <Button onClick={handleSavePhone} disabled={savingPhone} className="rounded-xl px-5">
-            {savingPhone ? '...' : 'حفظ'}
+            {savingPhone ? '...' : t('save')}
           </Button>
         </div>
       </div>
 
       <div className="bg-card rounded-2xl p-6 border border-destructive/30 shadow-sm">
         <h2 className="font-bold text-destructive mb-1 flex items-center gap-2">
-          <Trash2 className="h-4 w-4" /> حذف الحساب
+          <Trash2 className="h-4 w-4" /> {t('deleteAccount')}
         </h2>
-        <p className="text-sm text-muted-foreground mb-4">سيتم حذف حسابك وجميع بياناتك بشكل نهائي.</p>
+        <p className="text-sm text-muted-foreground mb-4">{t('deleteDesc')}</p>
 
         {!confirming ? (
           <Button variant="destructive" onClick={() => setConfirming(true)} className="w-full select-none">
-            حذف حسابي
+            {t('deleteBtn')}
           </Button>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-destructive">هل أنت متأكد؟</p>
+            <p className="text-sm font-medium text-destructive">{t('deleteConfirm')}</p>
             <div className="flex gap-2">
               <Button variant="destructive" onClick={handleDelete} disabled={loading} className="flex-1 select-none">
-                {loading ? 'جارٍ الحذف...' : 'نعم، احذف حسابي'}
+                {loading ? t('deleting') : t('deleteConfirmBtn')}
               </Button>
               <Button variant="outline" onClick={() => setConfirming(false)} className="flex-1 select-none">
-                إلغاء
+                {t('cancel')}
               </Button>
             </div>
           </div>

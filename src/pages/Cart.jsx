@@ -13,8 +13,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLang } from '@/lib/i18n';
 
 export default function Cart() {
+  const { t, lang } = useLang();
   const [cart, setCart] = useState(getCart());
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -51,7 +53,7 @@ export default function Cart() {
     const trimmed = couponCode.trim().toUpperCase();
     if (!trimmed) return;
     if (discountInfo && discountInfo.code === trimmed) {
-      toast.error('تم تطبيق هذا الكوبون مسبقاً');
+      toast.error(t('couponAlreadyApplied'));
       return;
     }
     const allCoupons = await base44.entities.Coupon.list();
@@ -59,13 +61,13 @@ export default function Cart() {
       c => c.code?.trim().toUpperCase() === trimmed && c.active !== false
     );
     if (!coupon) {
-      toast.error('كود الخصم غير صالح أو منتهي الصلاحية');
+      toast.error(t('couponInvalid'));
       setDiscount(0);
       setDiscountInfo(null);
       return;
     }
     if (coupon.min_order && subtotal < coupon.min_order) {
-      toast.error(`الحد الأدنى للطلب ${coupon.min_order} د.أ`);
+      toast.error(`${t('couponMinOrder')} ${coupon.min_order} د.أ`);
       return;
     }
     const d = coupon.discount_type === 'percentage'
@@ -73,21 +75,21 @@ export default function Cart() {
       : coupon.discount_value;
     setDiscount(d);
     setDiscountInfo(coupon);
-    toast.success(`✅ تم تطبيق الخصم: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
+    toast.success(`✅ ${t('couponApplied')}: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
   };
 
   const BUSINESS_WHATSAPP = '962790607665';
 
   const handleSubmit = async () => {
     if (!form.address) {
-      toast.error('يرجى إدخال العنوان');
+      toast.error(t('addressRequired'));
       return;
     }
     const customerName = user?.full_name || 'عميل';
     const customerPhone = user?.phone || '';
 
     if (!customerPhone) {
-      toast.error('يرجى إضافة رقم هاتفك في صفحة الملف الشخصي قبل تأكيد الطلب');
+      toast.error(t('phoneRequired'));
       return;
     }
 
@@ -128,22 +130,6 @@ export default function Cart() {
       } catch (e) { /* ignore */ }
     }
 
-    // Send to Zapier
-    try {
-      await fetch('https://hooks.zapier.com/hooks/catch/27207388/u7pm7mu/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: customerName,
-          phone: customerPhone,
-          meals: cart.map(i => ({ name: i.meal_name, quantity: i.quantity, price: i.price })),
-          addons: cart.flatMap(i => i.addons_label ? [i.addons_label] : []),
-          total,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (e) { /* ignore webhook errors */ }
-
     // Build WhatsApp message
     const itemsLines = cart.map(i =>
       `- ${i.meal_name} ×${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`
@@ -168,7 +154,7 @@ export default function Cart() {
 
     clearCart();
     setSubmitting(false);
-    toast.success('تم تأكيد طلبك! سيتم تحويلك لواتساب...');
+    toast.success(t('orderConfirmed'));
     setTimeout(() => window.open(waUrl, '_blank'), 800);
     navigate(`/order-success/${order.id}`);
   };
@@ -177,23 +163,23 @@ export default function Cart() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
         <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-        <h2 className="text-xl font-bold mb-2">السلة فارغة</h2>
-        <p className="text-muted-foreground mb-6">ابدأ بإضافة وجباتك المفضلة</p>
+        <h2 className="text-xl font-bold mb-2">{t('cartEmpty')}</h2>
+        <p className="text-muted-foreground mb-6">{t('cartEmptyDesc')}</p>
         <Link to="/menu">
-          <Button className="rounded-2xl px-8">تصفح القائمة</Button>
+          <Button className="rounded-2xl px-8">{t('browseMenu')}</Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="max-w-3xl mx-auto px-4 py-6" dir={lang === 'en' ? 'ltr' : 'rtl'}>
       <Link to="/menu" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4">
         <ArrowRight className="h-4 w-4" />
-        متابعة التسوق
+        {t('continueShopping')}
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">سلة المشتريات</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('cartTitle')}</h1>
 
       <div className="space-y-3 mb-6">
         <AnimatePresence>
@@ -233,21 +219,21 @@ export default function Cart() {
 
       {/* Coupon */}
       <div className="bg-card rounded-2xl p-4 border border-border/50 mb-6">
-        <Label className="text-sm font-medium mb-2 block">كود خصم</Label>
+        <Label className="text-sm font-medium mb-2 block">{t('discountCode')}</Label>
         <div className="flex gap-2">
           <Input
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-            placeholder="أدخل كود الخصم"
+            placeholder={t('enterCoupon')}
             className="rounded-xl"
           />
-          <Button onClick={applyCoupon} variant="outline" className="rounded-xl px-6">تطبيق</Button>
+          <Button onClick={applyCoupon} variant="outline" className="rounded-xl px-6">{t('apply')}</Button>
         </div>
       </div>
 
       {/* Order Form */}
       <div className="bg-card rounded-2xl p-6 border border-border/50 mb-6 space-y-4">
-        <h2 className="font-bold text-lg">بيانات التوصيل</h2>
+        <h2 className="font-bold text-lg">{t('deliveryInfo')}</h2>
         {user && (
           <div className="bg-muted/40 rounded-xl px-4 py-3 text-sm">
             <p className="font-medium">{user.full_name}</p>
@@ -255,33 +241,33 @@ export default function Cart() {
           </div>
         )}
         <div>
-          <Label>العنوان *</Label>
-          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="rounded-xl mt-1" placeholder="العنوان بالتفصيل" />
+          <Label>{t('address')} *</Label>
+          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="rounded-xl mt-1" placeholder={t('addressPlaceholder')} />
         </div>
         <div>
-          <Label>ملاحظات</Label>
-          <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="rounded-xl mt-1" placeholder="أي ملاحظات إضافية..." />
+          <Label>{t('notes')}</Label>
+          <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="rounded-xl mt-1" placeholder={t('notesPlaceholder')} />
         </div>
       </div>
 
       {/* Summary */}
       <div className="bg-card rounded-2xl p-6 border border-border/50 mb-6">
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">المجموع الفرعي</span><span>{subtotal.toFixed(2)} د.أ</span></div>
-          {discount > 0 && <div className="flex justify-between text-emerald-600"><span>الخصم</span><span>-{discount.toFixed(2)} د.أ</span></div>}
-          <div className="flex justify-between"><span className="text-muted-foreground">التوصيل</span><span className="text-primary font-medium">{deliveryFee.toFixed(2)} د.أ{distance ? ` (${distance.toFixed(1)} كم)` : ''}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{t('subtotal')}</span><span>{subtotal.toFixed(2)} د.أ</span></div>
+          {discount > 0 && <div className="flex justify-between text-emerald-600"><span>{t('discount')}</span><span>-{discount.toFixed(2)} د.أ</span></div>}
+          <div className="flex justify-between"><span className="text-muted-foreground">{t('delivery')}</span><span className="text-primary font-medium">{deliveryFee.toFixed(2)} د.أ{distance ? ` (${distance.toFixed(1)} كم)` : ''}</span></div>
           <div className="border-t border-border pt-2 flex justify-between text-lg font-bold">
-            <span>المجموع</span>
+            <span>{t('total')}</span>
             <span className="text-primary">{total.toFixed(2)} د.أ</span>
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-          💰 الدفع نقداً عند الاستلام
+          💰 {t('cashOnDelivery')}
         </p>
       </div>
 
       <Button onClick={handleSubmit} disabled={submitting} className="w-full h-14 rounded-2xl text-lg font-bold">
-        {submitting ? 'جاري إرسال الطلب...' : `تأكيد الطلب — ${total.toFixed(2)} د.أ`}
+        {submitting ? t('sendingOrder') : `${t('confirmOrder')} — ${total.toFixed(2)} د.أ`}
       </Button>
     </div>
   );
