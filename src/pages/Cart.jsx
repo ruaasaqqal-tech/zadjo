@@ -54,7 +54,6 @@ export default function Cart() {
       toast.error('تم تطبيق هذا الكوبون مسبقاً');
       return;
     }
-    // Fetch all active coupons and match case-insensitively
     const allCoupons = await base44.entities.Coupon.list();
     const coupon = allCoupons.find(
       c => c.code?.trim().toUpperCase() === trimmed && c.active !== false
@@ -77,7 +76,7 @@ export default function Cart() {
     toast.success(`✅ تم تطبيق الخصم: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
   };
 
-  const BUSINESS_WHATSAPP = '962790607665'; // رقم واتساب المطبخ
+  const BUSINESS_WHATSAPP = '962790607665';
 
   const handleSubmit = async () => {
     if (!form.address) {
@@ -94,29 +93,8 @@ export default function Cart() {
 
     setSubmitting(true);
     const kitchenName = getCartKitchen(cart);
-const order = await base44.entities.Order.create({...});
-
-// 👇 حطي الكود هون مباشرة
-try {
-  await fetch('https://hooks.zapier.com/hooks/catch/27207388/u7pm7mu/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: customerName,
-      phone: customerPhone,
-      meals: cart.map(i => ({
-        name: i.meal_name,
-        quantity: i.quantity,
-        price: i.price
-      })),
-      addons: cart.flatMap(i => i.addons_label ? [i.addons_label] : []),
-      total,
-      timestamp: new Date().toISOString(),
-    }),
-  });
-} catch (e) {
-  console.log("Zapier error:", e);
-}      customer_name: customerName,
+    const order = await base44.entities.Order.create({
+      customer_name: customerName,
       phone: customerPhone,
       address: form.address,
       notes: form.notes,
@@ -150,6 +128,22 @@ try {
       } catch (e) { /* ignore */ }
     }
 
+    // Send to Zapier
+    try {
+      await fetch('https://hooks.zapier.com/hooks/catch/27207388/u7pm7mu/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customerName,
+          phone: customerPhone,
+          meals: cart.map(i => ({ name: i.meal_name, quantity: i.quantity, price: i.price })),
+          addons: cart.flatMap(i => i.addons_label ? [i.addons_label] : []),
+          total,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (e) { /* ignore webhook errors */ }
+
     // Build WhatsApp message
     const itemsLines = cart.map(i =>
       `- ${i.meal_name} ×${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`
@@ -171,22 +165,6 @@ try {
     ].filter(Boolean).join('\n');
 
     const waUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
-
-    // Send to Zapier
-    try {
-      await fetch('https://hooks.zapier.com/hooks/catch/27207388/u7pm7mu/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: customerName,
-          phone: customerPhone,
-          meals: cart.map(i => ({ name: i.meal_name, quantity: i.quantity, price: i.price })),
-          addons: cart.flatMap(i => i.addons_label ? [i.addons_label] : []),
-          total,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (e) { /* ignore webhook errors */ }
 
     clearCart();
     setSubmitting(false);
