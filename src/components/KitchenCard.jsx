@@ -1,9 +1,14 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChefHat, ArrowLeft } from 'lucide-react';
+import { useLang, getKitchenName } from '@/lib/i18n';
 
 export default function KitchenCard({ kitchen, index = 0 }) {
+  const { lang, t } = useLang();
   const slug = encodeURIComponent(kitchen.cook_name);
+  const displayName = getKitchenName(kitchen, lang);
+  const displaySpecialty = lang === 'en' && kitchen.specialty_en ? kitchen.specialty_en : kitchen.specialty;
+  const displayDesc = lang === 'en' && kitchen.description_en ? kitchen.description_en : kitchen.description;
 
   return (
     <motion.div
@@ -32,15 +37,15 @@ export default function KitchenCard({ kitchen, index = 0 }) {
             </div>
           </div>
           <div className="p-3">
-            <h3 className="font-bold text-sm text-foreground leading-tight mb-0.5">{kitchen.cook_name}</h3>
-            {kitchen.specialty && (
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">{kitchen.specialty}</p>
+            <h3 className="font-bold text-sm text-foreground leading-tight mb-0.5">{displayName}</h3>
+            {displaySpecialty && (
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">{displaySpecialty}</p>
             )}
-            {kitchen.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{kitchen.description}</p>
+            {displayDesc && (
+              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{displayDesc}</p>
             )}
             <div className="flex items-center gap-1 text-primary">
-              <span className="text-xs font-medium">تصفح القائمة</span>
+              <span className="text-xs font-medium">{t('browseKitchenMenu')}</span>
               <ArrowLeft className="h-3 w-3" />
             </div>
           </div>

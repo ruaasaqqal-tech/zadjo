@@ -31,7 +31,9 @@ export default function Header() {
           </button>
         ) : null}
         <Link to="/" className="flex items-center gap-2 select-none">
-          <span className="text-2xl">🍲</span>
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md flex-shrink-0">
+            <span className="text-lg">🍽️</span>
+          </div>
           <div>
             <h1 className="text-lg font-bold text-foreground leading-tight">لقمة بيت</h1>
             <p className="text-[10px] text-muted-foreground leading-none">{t('freshFood')}</p>

@@ -4,11 +4,19 @@
   "properties": {
     "meal_name": {
       "type": "string",
-      "title": "\u0627\u0633\u0645 \u0627\u0644\u0648\u062c\u0628\u0629"
+      "title": "\u0627\u0633\u0645 \u0627\u0644\u0648\u062c\u0628\u0629 (\u0639\u0631\u0628\u064a)"
+    },
+    "meal_name_en": {
+      "type": "string",
+      "title": "Meal Name (English)"
     },
     "cook_name": {
       "type": "string",
-      "title": "\u0627\u0633\u0645 \u0627\u0644\u0645\u0637\u0628\u062e"
+      "title": "\u0627\u0633\u0645 \u0627\u0644\u0637\u0628\u0627\u062e"
+    },
+    "cook_name_en": {
+      "type": "string",
+      "title": "Cook Name (English)"
     },
     "kitchen_id": {
       "type": "string",
@@ -16,7 +24,11 @@
     },
     "description": {
       "type": "string",
-      "title": "\u0627\u0644\u0648\u0635\u0641"
+      "title": "\u0627\u0644\u0648\u0635\u0641 (\u0639\u0631\u0628\u064a)"
+    },
+    "description_en": {
+      "type": "string",
+      "title": "Description (English)"
     },
     "price": {
       "type": "number",
@@ -87,16 +99,31 @@
   ],
   "rls": {
     "create": {
-      "created_by": "{{user.email}}"
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.available": true
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "update": {
-      "created_by": "{{user.email}}"
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "created_by": "{{user.email}}"
-    },
-    "write": {
-      "created_by": "{{user.email}}"
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

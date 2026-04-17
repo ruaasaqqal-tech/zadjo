@@ -11,17 +11,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl">🍲</span>
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md flex-shrink-0">
+                <span className="text-xl">🍽️</span>
+              </div>
               <div>
                 <h3 className="text-xl font-bold">لقمة بيت</h3>
                 <p className="text-sm opacity-70">{t('freshFood')}</p>
               </div>
             </div>
-            <p className="text-sm opacity-60 leading-relaxed">
-              {lang === 'ar'
-                ? 'منصة لتوصيل الأكل البيتي الطازج من أفضل مطابخ السلط مباشرة إلى بابك.'
-                : 'A platform delivering fresh home-cooked food from the best kitchens in Salt right to your door.'}
-            </p>
+            <p className="text-sm opacity-60 leading-relaxed">{t('footerDesc')}</p>
           </div>
 
           <div>

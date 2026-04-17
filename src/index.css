@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,6 +7,7 @@
 @layer base {
   :root {
     --font-cairo: 'Cairo', sans-serif;
+    --font-poppins: 'Poppins', sans-serif;
     --background: 30 20% 99%;
     --foreground: 20 10% 10%;
     --card: 0 0% 100%;
@@ -88,6 +89,9 @@
   body {
     @apply bg-background text-foreground font-cairo;
     overscroll-behavior-y: none;
+  }
+  :lang(en) body, html[lang="en"] body {
+    font-family: var(--font-poppins);
   }
   button, a, nav, header {
     user-select: none;

@@ -8,8 +8,10 @@ import CategoryBar from '../components/CategoryBar';
 import MealSection from '../components/MealSection';
 import TrustSection from '../components/TrustSection';
 import KitchensSection from '../components/KitchensSection';
+import { useLang } from '@/lib/i18n';
 
 export default function Home() {
+  const { t } = useLang();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
@@ -32,7 +34,7 @@ export default function Home() {
   return (
     <PullToRefresh onRefresh={refetch}>
     <div>
-
+      <HeroBanner />
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
         <div className="bg-card rounded-2xl p-4 shadow-lg border border-border/50 space-y-4">
           <SearchBar value={search} onChange={setSearch} />
@@ -42,13 +44,13 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4">
         {search || category !== 'all' ? (
-          <MealSection title="نتائج البحث" meals={filtered} loading={isLoading} showAll />
+          <MealSection title={t('searchResults')} meals={filtered} loading={isLoading} showAll />
         ) : (
           <>
             <KitchensSection />
-            <MealSection title="🔥 عرض اليوم" meals={todayDeals} loading={isLoading} />
-            <MealSection title="⭐ الأكثر طلباً" meals={popular} loading={isLoading} />
-            <MealSection title="💎 الأعلى تقييماً" meals={topRated} loading={isLoading} />
+            <MealSection title={t('todayDeals')} meals={todayDeals} loading={isLoading} />
+            <MealSection title={t('mostOrdered')} meals={popular} loading={isLoading} />
+            <MealSection title={t('topRated')} meals={topRated} loading={isLoading} />
           </>
         )}
       </div>

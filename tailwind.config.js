@@ -6,6 +6,7 @@ module.exports = {
   	extend: {
   		fontFamily: {
   			cairo: ['var(--font-cairo)'],
+  			poppins: ['var(--font-poppins)'],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

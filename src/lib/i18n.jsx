@@ -17,6 +17,14 @@ export const translations = {
     madeIn: 'صنع في السلط',
     trackYourOrder: 'تتبع طلبك',
     delivery24: 'الطلب والتوصيل متاحان على مدار الساعة',
+    footerDesc: 'منصة لتوصيل الأكل البيتي الطازج من أفضل مطابخ السلط مباشرة إلى بابك.',
+    // Hero
+    heroTag: '🕐 الطلب والتوصيل متاحان على مدار الساعة',
+    heroTitle1: 'أكل بيتي طازج',
+    heroTitle2: 'من مطابخ السلط',
+    heroSub: 'وجبات بيتية لذيذة محضّرة بحب وعناية، توصلك لباب بيتك',
+    orderNow: 'اطلب الآن',
+    whatsapp: 'واتساب',
     // Cart
     cartTitle: 'سلة المشتريات',
     cartEmpty: 'السلة فارغة',
@@ -48,6 +56,19 @@ export const translations = {
     // Menu
     fullMenu: 'القائمة الكاملة',
     mealsAvailable: 'وجبة متاحة',
+    searchResults: 'نتائج البحث',
+    todayDeals: '🔥 عرض اليوم',
+    mostOrdered: '⭐ الأكثر طلباً',
+    topRated: '💎 الأعلى تقييماً',
+    // Kitchen
+    browseKitchenMenu: 'تصفح القائمة',
+    addToCart: 'أضف',
+    addedToCart: 'تمت الإضافة إلى السلة',
+    // Meal modal
+    optionalAddons: 'إضافات اختيارية',
+    totalAmount: 'المجموع',
+    addToCartBtn: 'أضف للسلة',
+    minutes: 'دقيقة',
     // TrackOrder
     myOrders: 'طلباتي',
     loading: 'جاري التحميل...',
@@ -76,6 +97,23 @@ export const translations = {
     onTheWay: 'في الطريق',
     delivered: 'تم التوصيل',
     cancelled: 'ملغي',
+    // Categories
+    catAll: 'الكل',
+    catMansaf: 'منسف',
+    catMaqluba: 'مقلوبة',
+    catPastries: 'معجنات',
+    catDailyFood: 'أكل يومي',
+    catSweets: 'حلويات',
+    catDrinks: 'مشروبات',
+    // Trust section
+    trust1Title: 'أكل بيتي أصيل',
+    trust1Desc: 'وجبات محضّرة بأيدي أمهات وطباخين ماهرين',
+    trust2Title: 'جودة ونظافة',
+    trust2Desc: 'مكونات طازجة ومعايير نظافة عالية',
+    trust3Title: 'توصيل سريع',
+    trust3Desc: 'نوصل طلبك في أسرع وقت ممكن',
+    trust4Title: 'دفع عند الاستلام',
+    trust4Desc: 'ادفع عند وصول طلبك، بدون مخاطر',
   },
   en: {
     // Nav
@@ -93,16 +131,24 @@ export const translations = {
     madeIn: 'Made in Salt',
     trackYourOrder: 'Track Order',
     delivery24: 'Orders & delivery available 24/7',
+    footerDesc: 'A platform delivering fresh home-cooked food from the best kitchens in Salt right to your door.',
+    // Hero
+    heroTag: '🕐 Orders & delivery available 24/7',
+    heroTitle1: 'Fresh Home-Cooked',
+    heroTitle2: 'Food from Salt\'s Kitchens',
+    heroSub: 'Delicious homemade meals prepared with love and care, delivered straight to your door.',
+    orderNow: 'Order Now',
+    whatsapp: 'WhatsApp',
     // Cart
-    cartTitle: 'Cart',
-    cartEmpty: 'Cart is empty',
+    cartTitle: 'Shopping Cart',
+    cartEmpty: 'Your cart is empty',
     cartEmptyDesc: 'Start adding your favorite meals',
     browseMenu: 'Browse Menu',
     continueShopping: 'Continue Shopping',
     discountCode: 'Discount Code',
     enterCoupon: 'Enter coupon code',
     apply: 'Apply',
-    deliveryInfo: 'Delivery Info',
+    deliveryInfo: 'Delivery Information',
     address: 'Address',
     addressPlaceholder: 'Full address details',
     notes: 'Notes',
@@ -124,6 +170,19 @@ export const translations = {
     // Menu
     fullMenu: 'Full Menu',
     mealsAvailable: 'meals available',
+    searchResults: 'Search Results',
+    todayDeals: '🔥 Today\'s Deals',
+    mostOrdered: '⭐ Most Ordered',
+    topRated: '💎 Top Rated',
+    // Kitchen
+    browseKitchenMenu: 'Browse Menu',
+    addToCart: 'Add',
+    addedToCart: 'Added to cart',
+    // Meal modal
+    optionalAddons: 'Optional Add-ons',
+    totalAmount: 'Total',
+    addToCartBtn: 'Add to Cart',
+    minutes: 'min',
     // TrackOrder
     myOrders: 'My Orders',
     loading: 'Loading...',
@@ -147,13 +206,48 @@ export const translations = {
     deleting: 'Deleting...',
     cancel: 'Cancel',
     // Status
-    orderPlaced: 'Order placed',
+    orderPlaced: 'Order Placed',
     preparing: 'Preparing',
-    onTheWay: 'On the way',
+    onTheWay: 'On the Way',
     delivered: 'Delivered',
     cancelled: 'Cancelled',
+    // Categories
+    catAll: 'All',
+    catMansaf: 'Mansaf',
+    catMaqluba: 'Maqluba',
+    catPastries: 'Pastries',
+    catDailyFood: 'Daily Food',
+    catSweets: 'Sweets',
+    catDrinks: 'Drinks',
+    // Trust section
+    trust1Title: 'Authentic Home Cooking',
+    trust1Desc: 'Meals prepared by skilled home cooks and mothers',
+    trust2Title: 'Quality & Hygiene',
+    trust2Desc: 'Fresh ingredients and high hygiene standards',
+    trust3Title: 'Fast Delivery',
+    trust3Desc: 'We deliver your order as quickly as possible',
+    trust4Title: 'Cash on Delivery',
+    trust4Desc: 'Pay when your order arrives — no risk at all',
   },
 };
+
+// Helper: get meal display name based on current lang
+export function getMealName(meal, lang) {
+  if (lang === 'en' && meal.meal_name_en) return meal.meal_name_en;
+  return meal.meal_name || '';
+}
+
+// Helper: get meal description based on current lang
+export function getMealDescription(meal, lang) {
+  if (lang === 'en' && meal.description_en) return meal.description_en;
+  return meal.description || '';
+}
+
+// Helper: get kitchen name based on current lang
+export function getKitchenName(kitchen, lang) {
+  if (lang === 'en' && kitchen.cook_name_en) return kitchen.cook_name_en;
+  return kitchen.cook_name || '';
+}
 
 const LangContext = createContext(null);
 
