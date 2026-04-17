@@ -151,6 +151,22 @@ export default function Cart() {
 
     const waUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
+    // Send to Zapier
+    try {
+      await fetch('https://hooks.zapier.com/hooks/catch/27207388/u7pm7mu/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customerName,
+          phone: customerPhone,
+          meals: cart.map(i => ({ name: i.meal_name, quantity: i.quantity, price: i.price })),
+          addons: cart.flatMap(i => i.addons_label ? [i.addons_label] : []),
+          total,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (e) { /* ignore webhook errors */ }
+
     clearCart();
     setSubmitting(false);
     toast.success('تم تأكيد طلبك! سيتم تحويلك لواتساب...');
