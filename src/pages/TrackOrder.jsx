@@ -1,4 +1,3 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Package, Clock, Truck, CheckCircle, ShoppingBag, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,18 +50,34 @@ function CancelCountdown({ order, onCancel, label }) {
 export default function TrackOrder() {
   const { t } = useLang();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [reviewOrder, setReviewOrder] = useState(null);
   const [reviewedIds, setReviewedIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('reviewed_orders') || '[]'); } catch { return []; }
   });
 
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['my-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({ created_by: user?.email }, '-created_date', 20),
-    enabled: !!user?.email,
-    refetchInterval: 15000,
-  });
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    base44.entities.Order.filter({ created_by: user.email }, '-created_date', 20).then((data) => {
+      setOrders(data);
+      setIsLoading(false);
+    });
+  }, [user?.email]);
+
+  useEffect(() => {
+    const unsubscribe = base44.entities.Order.subscribe((event) => {
+      if (event.type === 'create') {
+        setOrders((prev) => prev.find(o => o.id === event.id) ? prev : [event.data, ...prev]);
+      } else if (event.type === 'update') {
+        setOrders((prev) => prev.map(o => o.id === event.id ? { ...o, ...event.data } : o));
+      } else if (event.type === 'delete') {
+        setOrders((prev) => prev.filter(o => o.id !== event.id));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleCancel = async (order) => {
     if (!order) return;
@@ -72,7 +87,6 @@ export default function TrackOrder() {
       return;
     }
     await base44.entities.Order.update(order.id, { status: 'ملغي' });
-    queryClient.invalidateQueries({ queryKey: ['my-orders'] });
     toast.success(t('orderCancelled'));
   };
 
