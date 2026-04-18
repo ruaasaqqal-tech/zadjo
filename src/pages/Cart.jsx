@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Minus, Plus, ShoppingCart, ArrowRight, MapPin, Loader2 } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/i18n';
+import LocationPicker from '@/components/LocationPicker';
 
 export default function Cart() {
   const { t, lang } = useLang();
@@ -23,8 +24,8 @@ export default function Cart() {
   const [discountInfo, setDiscountInfo] = useState(null);
   const [form, setForm] = useState({ address: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [customerCoords, setCustomerCoords] = useState(null); // { lat, lng }
-  const [gpsLoading, setGpsLoading] = useState(false);
+  const [customerCoords, setCustomerCoords] = useState(null);
+  const [mapsApiKey, setMapsApiKey] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
   const { location: userLoc } = useUserLocation();
@@ -42,19 +43,21 @@ export default function Cart() {
     : null;
   const deliveryFee = calcDeliveryFee(distance);
 
+  // Fetch Maps API key from backend
+  useEffect(() => {
+    base44.functions.invoke('getMapsKey', {}).then(res => {
+      if (res.data?.key) setMapsApiKey(res.data.key);
+    }).catch(() => {});
+  }, []);
+
   // Auto-detect customer GPS on mount
   useEffect(() => {
     if (!navigator.geolocation) return;
-    setGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setCustomerCoords(coords);
-        setGpsLoading(false);
+        setCustomerCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       },
-      () => {
-        setGpsLoading(false);
-      },
+      () => {},
       { timeout: 8000, enableHighAccuracy: true }
     );
   }, []);
@@ -100,7 +103,7 @@ export default function Cart() {
   const BUSINESS_WHATSAPP = '962790607665';
 
   const handleSubmit = async () => {
-    if (!form.address) {
+    if (!form.address && !customerCoords) {
       toast.error(t('addressRequired'));
       return;
     }
@@ -117,10 +120,9 @@ export default function Cart() {
     const order = await base44.entities.Order.create({
       customer_name: customerName,
       phone: customerPhone,
-      address: form.address,
+      address: form.address || `${customerCoords?.lat?.toFixed(5)}, ${customerCoords?.lng?.toFixed(5)}`,
       notes: form.notes,
       kitchen_name: kitchenName || '',
-      // Save GPS coordinates for driver navigation
       ...(customerCoords ? { customer_lat: customerCoords.lat, customer_lng: customerCoords.lng } : {}),
       items: cart.map(item => ({
         meal_id: item.meal_id,
@@ -265,36 +267,22 @@ export default function Cart() {
           </div>
         )}
 
-        {/* GPS Location Status */}
-        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl ${
-          customerCoords
-            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            : gpsLoading
-              ? 'bg-muted/50 text-muted-foreground border border-border'
-              : 'bg-amber-50 text-amber-700 border border-amber-200'
-        }`}>
-          {gpsLoading ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin flex-shrink-0" />
-              <span>جارٍ تحديد موقعك تلقائياً...</span>
-            </>
-          ) : customerCoords ? (
-            <>
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>✅ تم تحديد موقعك — سيُرسل للسائق للملاحة الدقيقة</span>
-            </>
-          ) : (
-            <>
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>⚠️ لم يتم تحديد الموقع — يرجى كتابة عنوانك بدقة</span>
-            </>
+        {/* Map-based location picker */}
+        <div>
+          <Label className="mb-2 block">📍 {t('address')} *</Label>
+          <LocationPicker
+            apiKey={mapsApiKey}
+            coords={customerCoords}
+            onCoordsChange={({ lat, lng, address }) => {
+              setCustomerCoords({ lat, lng });
+              setForm(f => ({ ...f, address }));
+            }}
+          />
+          {form.address && (
+            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">📌 {form.address}</p>
           )}
         </div>
 
-        <div>
-          <Label>{t('address')} *</Label>
-          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="rounded-xl mt-1" placeholder={t('addressPlaceholder')} />
-        </div>
         <div>
           <Label>{t('notes')}</Label>
           <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="rounded-xl mt-1" placeholder={t('notesPlaceholder')} />
