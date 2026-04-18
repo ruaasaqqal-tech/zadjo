@@ -1,204 +1,121 @@
-import { useEffect, useRef, useState } from 'react';
-import { MapPin, Loader2, Search, LocateFixed } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Loader2, LocateFixed, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || window.__GOOGLE_MAPS_KEY__;
-
-// Load Google Maps script once
-let scriptPromise = null;
-function loadGoogleMaps(apiKey) {
-  if (window.google?.maps) return Promise.resolve();
-  if (scriptPromise) return scriptPromise;
-  scriptPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-  return scriptPromise;
-}
+import { Input } from '@/components/ui/input';
 
 /**
- * LocationPicker
+ * LocationPicker — GPS-first, no Google Maps API key required.
  * Props:
  *   coords: { lat, lng } | null
  *   onCoordsChange: ({ lat, lng, address }) => void
- *   apiKey: string
  */
-export default function LocationPicker({ coords, onCoordsChange, apiKey }) {
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markerRef = useRef(null);
-  const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-
-  const [mapsLoaded, setMapsLoaded] = useState(false);
-  const [loadError, setLoadError] = useState(false);
-  const [reverseLoading, setReverseLoading] = useState(false);
-
-  // Default center: Salt, Jordan
-  const defaultCenter = { lat: 32.034, lng: 35.727 };
-  const center = coords || defaultCenter;
-
-  useEffect(() => {
-    if (!apiKey) {
-      setLoadError(true);
-      return;
-    }
-    loadGoogleMaps(apiKey)
-      .then(() => setMapsLoaded(true))
-      .catch(() => setLoadError(true));
-  }, [apiKey]);
-
-  // Init map + marker
-  useEffect(() => {
-    if (!mapsLoaded || !mapRef.current) return;
-
-    const map = new window.google.maps.Map(mapRef.current, {
-      center,
-      zoom: 15,
-      disableDefaultUI: true,
-      zoomControl: true,
-      gestureHandling: 'greedy',
-    });
-    mapInstanceRef.current = map;
-
-    const marker = new window.google.maps.Marker({
-      position: center,
-      map,
-      draggable: true,
-      title: 'موقع التوصيل',
-      animation: window.google.maps.Animation.DROP,
-    });
-    markerRef.current = marker;
-
-    // Drag end → reverse geocode
-    marker.addListener('dragend', () => {
-      const pos = marker.getPosition();
-      reverseGeocode(pos.lat(), pos.lng());
-    });
-
-    // Click on map → move marker
-    map.addListener('click', (e) => {
-      marker.setPosition(e.latLng);
-      reverseGeocode(e.latLng.lat(), e.latLng.lng());
-    });
-
-    // Places autocomplete
-    if (inputRef.current) {
-      const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
-        fields: ['geometry', 'formatted_address', 'name'],
-        componentRestrictions: { country: 'jo' },
-      });
-      autocompleteRef.current = ac;
-      ac.addListener('place_changed', () => {
-        const place = ac.getPlace();
-        if (!place.geometry?.location) return;
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const address = place.formatted_address || place.name || '';
-        map.panTo({ lat, lng });
-        map.setZoom(16);
-        marker.setPosition({ lat, lng });
-        onCoordsChange({ lat, lng, address });
-      });
-    }
-  }, [mapsLoaded]);
-
-  // Sync marker if coords change externally
-  useEffect(() => {
-    if (!markerRef.current || !coords) return;
-    markerRef.current.setPosition(coords);
-    mapInstanceRef.current?.panTo(coords);
-  }, [coords]);
-
-  const reverseGeocode = (lat, lng) => {
-    setReverseLoading(true);
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      setReverseLoading(false);
-      const address = status === 'OK' && results[0] ? results[0].formatted_address : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-      onCoordsChange({ lat, lng, address });
-      if (inputRef.current) inputRef.current.value = address;
-    });
-  };
+export default function LocationPicker({ coords, onCoordsChange }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
 
   const handleLocateMe = () => {
-    if (!navigator.geolocation) return;
-    setReverseLoading(true);
+    if (!navigator.geolocation) {
+      setError('المتصفح لا يدعم تحديد الموقع. يرجى إدخال العنوان يدوياً.');
+      return;
+    }
+    setLoading(true);
+    setError('');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        mapInstanceRef.current?.panTo({ lat, lng });
-        mapInstanceRef.current?.setZoom(17);
-        markerRef.current?.setPosition({ lat, lng });
-        reverseGeocode(lat, lng);
+
+        // Reverse geocode using free Nominatim (OpenStreetMap) — no API key needed
+        let address = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ar`,
+            { headers: { 'Accept-Language': 'ar' } }
+          );
+          const data = await res.json();
+          if (data?.display_name) address = data.display_name;
+        } catch (_) { /* use coords as fallback */ }
+
+        setLoading(false);
+        onCoordsChange({ lat, lng, address });
       },
-      () => setReverseLoading(false),
-      { timeout: 8000, enableHighAccuracy: true }
+      (err) => {
+        setLoading(false);
+        if (err.code === 1) {
+          setError('تم رفض إذن الموقع. يرجى السماح للتطبيق بالوصول إلى موقعك من إعدادات المتصفح، أو أدخل عنوانك يدوياً.');
+        } else {
+          setError('تعذّر تحديد موقعك. يرجى إدخال العنوان يدوياً.');
+        }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
-  if (loadError) {
-    return (
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-700 flex items-center gap-2">
-        <MapPin className="h-4 w-4 flex-shrink-0" />
-        <span>تعذّر تحميل الخريطة. يرجى إدخال عنوانك يدوياً أدناه.</span>
-      </div>
-    );
-  }
-
-  if (!mapsLoaded) {
-    return (
-      <div className="h-52 rounded-2xl bg-muted/50 flex items-center justify-center gap-2 text-muted-foreground text-sm">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        جارٍ تحميل الخريطة...
-      </div>
-    );
-  }
+  const handleManualSubmit = () => {
+    if (!manualAddress.trim()) return;
+    onCoordsChange({ lat: null, lng: null, address: manualAddress.trim() });
+  };
 
   return (
-    <div className="space-y-2">
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="ابحث عن موقعك... (مثال: عبدون، السلط)"
-          className="w-full h-10 pr-9 pl-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          dir="auto"
-        />
-      </div>
+    <div className="space-y-3">
+      {/* GPS Button */}
+      <Button
+        type="button"
+        variant={coords ? 'outline' : 'default'}
+        className="w-full h-12 rounded-2xl gap-2 text-sm font-medium select-none"
+        onClick={handleLocateMe}
+        disabled={loading}
+      >
+        {loading ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> جارٍ تحديد موقعك...</>
+        ) : coords ? (
+          <><CheckCircle2 className="h-4 w-4 text-emerald-500" /> تم تحديد الموقع — انقر لإعادة التحديد</>
+        ) : (
+          <><LocateFixed className="h-4 w-4" /> حدد موقعي تلقائياً 📍</>
+        )}
+      </Button>
 
-      {/* Map */}
-      <div className="relative rounded-2xl overflow-hidden border border-border" style={{ height: 220 }}>
-        <div ref={mapRef} className="w-full h-full" />
-        {/* Locate Me button */}
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={handleLocateMe}
-          disabled={reverseLoading}
-          className="absolute bottom-3 left-3 rounded-xl gap-1.5 shadow-md text-xs select-none"
-        >
-          {reverseLoading
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            : <LocateFixed className="h-3.5 w-3.5" />}
-          موقعي الحالي
-        </Button>
-      </div>
-
+      {/* Show confirmed location */}
       {coords && (
-        <p className="text-xs text-emerald-600 flex items-center gap-1">
-          <MapPin className="h-3 w-3" />
-          تم تحديد الموقع — يمكنك سحب الدبوس لضبط الموقع بدقة
-        </p>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 flex items-start gap-2">
+          <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">تم تحديد موقعك بنجاح ✓</p>
+            <p className="text-xs text-emerald-600 mt-0.5 leading-relaxed">{coords.address || `${coords.lat?.toFixed(5)}, ${coords.lng?.toFixed(5)}`}</p>
+          </div>
+        </div>
       )}
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Manual address fallback */}
+      <div>
+        <p className="text-xs text-muted-foreground mb-1.5">أو أدخل عنوانك يدوياً:</p>
+        <div className="flex gap-2">
+          <Input
+            value={manualAddress}
+            onChange={(e) => setManualAddress(e.target.value)}
+            placeholder="مثال: شارع الجامعة، السلط"
+            className="rounded-xl flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-xl px-4 select-none"
+            onClick={handleManualSubmit}
+            disabled={!manualAddress.trim()}
+          >
+            تأكيد
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

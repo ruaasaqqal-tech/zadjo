@@ -25,7 +25,7 @@ export default function Cart() {
   const [form, setForm] = useState({ address: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
   const [customerCoords, setCustomerCoords] = useState(null);
-  const [mapsApiKey, setMapsApiKey] = useState('');
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const { location: userLoc } = useUserLocation();
@@ -42,13 +42,6 @@ export default function Cart() {
     ? calcDistance(userLoc.lat, userLoc.lng, kitchen.latitude, kitchen.longitude)
     : null;
   const deliveryFee = calcDeliveryFee(distance);
-
-  // Fetch Maps API key from backend
-  useEffect(() => {
-    base44.functions.invoke('getMapsKey', {}).then(res => {
-      if (res.data?.key) setMapsApiKey(res.data.key);
-    }).catch(() => {});
-  }, []);
 
   // Auto-detect customer GPS on mount
   useEffect(() => {
@@ -271,10 +264,9 @@ export default function Cart() {
         <div>
           <Label className="mb-2 block">📍 {t('address')} *</Label>
           <LocationPicker
-            apiKey={mapsApiKey}
             coords={customerCoords}
             onCoordsChange={({ lat, lng, address }) => {
-              setCustomerCoords({ lat, lng });
+              if (lat && lng) setCustomerCoords({ lat, lng });
               setForm(f => ({ ...f, address }));
             }}
           />
