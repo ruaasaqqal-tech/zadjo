@@ -51,7 +51,7 @@ export default function OrderConfirmation() {
         transition={{ delay: 0.3 }}
         className="text-muted-foreground text-center mb-6"
       >
-        شكراً لك! سنبدأ في تحضير طلبك الآن
+        تم تأكيد طلبك! يمكنك الآن متابعة تفاصيله
       </motion.p>
 
       {order && (
@@ -71,11 +71,11 @@ export default function OrderConfirmation() {
             <span className="text-2xl font-bold text-primary">{order.total?.toFixed(2)} د.أ</span>
           </div>
 
-          <div className="flex items-start gap-3 bg-blue-50 rounded-xl p-3">
-            <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 bg-primary/10 rounded-xl p-3">
+            <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-900">وقت التوصيل المتوقع</p>
-              <p className="text-blue-700">30-45 دقيقة</p>
+              <p className="font-medium text-primary">وقت التوصيل المتوقع</p>
+              <p className="text-primary/80">30-45 دقيقة</p>
             </div>
           </div>
 
