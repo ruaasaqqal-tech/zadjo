@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Package, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { Package, Clock, Truck, CheckCircle, XCircle, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUSES = ['الكل', 'تم الطلب', 'قيد التحضير', 'في الطريق', 'تم التوصيل', 'ملغي'];
@@ -18,52 +16,85 @@ const STATUS_CONFIG = {
 };
 
 export default function AdminOrders() {
-  const queryClient = useQueryClient();
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('الكل');
+  const initialLoadDone = useRef(false);
 
-  const prevCountRef = useRef(null);
-
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 200),
-    refetchInterval: 20000,
-  });
-
+  // Initial load
   useEffect(() => {
-    if (isLoading) return;
-    if (prevCountRef.current === null) {
-      prevCountRef.current = orders.length;
-      return;
-    }
-    if (orders.length > prevCountRef.current) {
-      const newest = orders[0];
-      toast.success(`🔔 طلب جديد من ${newest?.customer_name || ''}! المبلغ: ${newest?.total?.toFixed(2)} د.أ`, { duration: 8000 });
-    }
-    prevCountRef.current = orders.length;
-  }, [orders, isLoading]);
+    base44.entities.Order.list('-created_date', 200).then((data) => {
+      setOrders(data);
+      setIsLoading(false);
+      initialLoadDone.current = true;
+    });
+  }, []);
+
+  // Real-time WebSocket subscription — zero polling delay
+  useEffect(() => {
+    const unsubscribe = base44.entities.Order.subscribe((event) => {
+      if (event.type === 'create') {
+        setOrders((prev) => {
+          // Avoid duplicates
+          if (prev.find(o => o.id === event.id)) return prev;
+          const newOrder = event.data;
+          if (initialLoadDone.current) {
+            toast.success(
+              `🔔 طلب جديد من ${newOrder?.customer_name || ''}! المبلغ: ${newOrder?.total?.toFixed(2)} د.أ`,
+              { duration: 8000 }
+            );
+          }
+          return [newOrder, ...prev];
+        });
+      } else if (event.type === 'update') {
+        setOrders((prev) =>
+          prev.map(o => o.id === event.id ? { ...o, ...event.data } : o)
+        );
+      } else if (event.type === 'delete') {
+        setOrders((prev) => prev.filter(o => o.id !== event.id));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const filtered = filter === 'الكل' ? orders : orders.filter(o => o.status === filter);
 
   const updateStatus = async (orderId, newStatus) => {
-    // Optimistic update
-    queryClient.setQueryData(['admin-orders'], (old = []) =>
-      old.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
-    );
+    // Optimistic local update
+    setOrders((prev) => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     await base44.entities.Order.update(orderId, { status: newStatus });
-    queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
   };
 
   const getNextStatus = (current) => {
     const idx = STATUS_FLOW.indexOf(current);
-    if (idx >= 0 && idx < STATUS_FLOW.length - 1) return STATUS_FLOW[idx + 1];
-    return null;
+    return idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
+  };
+
+  const openNavigation = (order) => {
+    if (order.customer_lat && order.customer_lng) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${order.customer_lat},${order.customer_lng}`,
+        '_blank'
+      );
+    } else {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`,
+        '_blank'
+      );
+    }
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">إدارة الطلبات</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} طلب</span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            مباشر
+          </span>
+          <span className="text-sm text-muted-foreground">{filtered.length} طلب</span>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
@@ -71,7 +102,7 @@ export default function AdminOrders() {
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors select-none ${
               filter === s ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:bg-muted'
             }`}
           >
@@ -96,6 +127,7 @@ export default function AdminOrders() {
             const config = STATUS_CONFIG[order.status] || STATUS_CONFIG['تم الطلب'];
             const Icon = config.icon;
             const nextStatus = getNextStatus(order.status);
+            const hasGPS = !!(order.customer_lat && order.customer_lng);
 
             return (
               <div key={order.id} className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm">
@@ -109,6 +141,11 @@ export default function AdminOrders() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">{order.phone} • {order.address}</p>
+                    {hasGPS && (
+                      <p className="text-xs text-emerald-600 mt-0.5">
+                        📍 GPS: {order.customer_lat?.toFixed(5)}, {order.customer_lng?.toFixed(5)}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground mt-1">
                       {order.created_date ? new Date(order.created_date).toLocaleString('ar-JO') : ''}
                     </p>
@@ -119,7 +156,7 @@ export default function AdminOrders() {
                 <div className="bg-muted/50 rounded-xl p-3 mb-3">
                   {order.items?.map((item, i) => (
                     <div key={i} className="flex justify-between text-sm py-0.5">
-                      <span>{item.meal_name} × {item.quantity}</span>
+                      <span>{item.meal_name} × {item.quantity}{item.addons_label ? ` (${item.addons_label})` : ''}</span>
                       <span className="text-muted-foreground">{(item.price * item.quantity).toFixed(2)} د.أ</span>
                     </div>
                   ))}
@@ -135,12 +172,21 @@ export default function AdminOrders() {
                   <p className="text-xs text-muted-foreground bg-accent/50 rounded-lg p-2 mb-3">📝 {order.notes}</p>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {nextStatus && (
                     <Button size="sm" className="rounded-xl gap-1" onClick={() => updateStatus(order.id, nextStatus)}>
                       نقل إلى: {nextStatus}
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`rounded-xl gap-1 ${hasGPS ? 'text-emerald-600 border-emerald-300' : ''}`}
+                    onClick={() => openNavigation(order)}
+                  >
+                    <Navigation className="h-3.5 w-3.5" />
+                    {hasGPS ? 'ملاحة دقيقة GPS' : 'فتح الخريطة'}
+                  </Button>
                   {order.status !== 'ملغي' && order.status !== 'تم التوصيل' && (
                     <Button size="sm" variant="outline" className="rounded-xl text-destructive" onClick={() => updateStatus(order.id, 'ملغي')}>
                       إلغاء

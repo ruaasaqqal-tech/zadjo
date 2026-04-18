@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Minus, Plus, ShoppingCart, ArrowRight } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, ArrowRight, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,8 @@ export default function Cart() {
   const [discountInfo, setDiscountInfo] = useState(null);
   const [form, setForm] = useState({ address: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [customerCoords, setCustomerCoords] = useState(null); // { lat, lng }
+  const [gpsLoading, setGpsLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { location: userLoc } = useUserLocation();
@@ -39,6 +41,23 @@ export default function Cart() {
     ? calcDistance(userLoc.lat, userLoc.lng, kitchen.latitude, kitchen.longitude)
     : null;
   const deliveryFee = calcDeliveryFee(distance);
+
+  // Auto-detect customer GPS on mount
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCustomerCoords(coords);
+        setGpsLoading(false);
+      },
+      () => {
+        setGpsLoading(false);
+      },
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  }, []);
 
   useEffect(() => {
     const handler = () => setCart(getCart());
@@ -101,6 +120,8 @@ export default function Cart() {
       address: form.address,
       notes: form.notes,
       kitchen_name: kitchenName || '',
+      // Save GPS coordinates for driver navigation
+      ...(customerCoords ? { customer_lat: customerCoords.lat, customer_lng: customerCoords.lng } : {}),
       items: cart.map(item => ({
         meal_id: item.meal_id,
         meal_name: item.meal_name,
@@ -134,11 +155,14 @@ export default function Cart() {
     const itemsLines = cart.map(i =>
       `- ${i.meal_name} ×${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`
     ).join('\n');
+    const gpsLine = customerCoords
+      ? `\nالموقع الدقيق: https://maps.google.com/?q=${customerCoords.lat},${customerCoords.lng}`
+      : '';
     const waMsg = [
       `🛒 *طلب جديد*`,
       `الاسم: ${customerName}`,
       `الهاتف: ${customerPhone}`,
-      `العنوان: ${form.address}`,
+      `العنوان: ${form.address}${gpsLine}`,
       ``,
       `*الوجبات:*`,
       itemsLines,
@@ -240,6 +264,33 @@ export default function Cart() {
             {user.phone && <p className="text-muted-foreground">{user.phone}</p>}
           </div>
         )}
+
+        {/* GPS Location Status */}
+        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl ${
+          customerCoords
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : gpsLoading
+              ? 'bg-muted/50 text-muted-foreground border border-border'
+              : 'bg-amber-50 text-amber-700 border border-amber-200'
+        }`}>
+          {gpsLoading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin flex-shrink-0" />
+              <span>جارٍ تحديد موقعك تلقائياً...</span>
+            </>
+          ) : customerCoords ? (
+            <>
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>✅ تم تحديد موقعك — سيُرسل للسائق للملاحة الدقيقة</span>
+            </>
+          ) : (
+            <>
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>⚠️ لم يتم تحديد الموقع — يرجى كتابة عنوانك بدقة</span>
+            </>
+          )}
+        </div>
+
         <div>
           <Label>{t('address')} *</Label>
           <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="rounded-xl mt-1" placeholder={t('addressPlaceholder')} />
