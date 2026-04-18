@@ -7,10 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, ChefHat, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChefHat, MapPin, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', latitude: '', longitude: '', active: true };
+const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', latitude: '', longitude: '', location_url: '', active: true };
 
 export default function AdminKitchens() {
   const queryClient = useQueryClient();
@@ -24,7 +24,7 @@ export default function AdminKitchens() {
   });
 
   const openNew = () => { setForm(EMPTY); setEditing(null); setOpen(true); };
-  const openEdit = (k) => { setForm({ ...k, latitude: k.latitude ?? '', longitude: k.longitude ?? '' }); setEditing(k.id); setOpen(true); };
+  const openEdit = (k) => { setForm({ ...k, latitude: k.latitude ?? '', longitude: k.longitude ?? '', location_url: k.location_url ?? '' }); setEditing(k.id); setOpen(true); };
 
   const handleSave = async () => {
     if (!form.cook_name.trim()) { toast.error('اسم المطبخ مطلوب'); return; }
@@ -89,10 +89,15 @@ export default function AdminKitchens() {
                 {k.specialty && <p className="text-xs text-orange-600 dark:text-orange-400">{k.specialty}</p>}
                 {k.phone && <p className="text-xs text-muted-foreground">📞 {k.phone}</p>}
                 {k.latitude && k.longitude && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />{k.latitude.toFixed(4)}, {k.longitude.toFixed(4)}
-                  </p>
-                )}
+                   <p className="text-xs text-muted-foreground flex items-center gap-1">
+                     <MapPin className="h-3 w-3" />{k.latitude.toFixed(4)}, {k.longitude.toFixed(4)}
+                   </p>
+                 )}
+                 {k.location_url && (
+                   <a href={k.location_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                     <ExternalLink className="h-3 w-3" /> فتح الموقع
+                   </a>
+                 )}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(k)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -138,6 +143,28 @@ export default function AdminKitchens() {
                 <Label>خط الطول (Lng)</Label>
                 <Input value={form.longitude} onChange={e => setForm({ ...form, longitude: e.target.value })} className="rounded-xl mt-1" placeholder="35.9876" dir="ltr" type="number" step="any" />
               </div>
+            </div>
+            <div>
+              <Label>رابط الموقع (Google Maps)</Label>
+              <Input 
+                value={form.location_url} 
+                onChange={e => setForm({ ...form, location_url: e.target.value })} 
+                className="rounded-xl mt-1" 
+                placeholder="https://maps.google.com/?q=31.8765,35.9876" 
+                dir="ltr" 
+              />
+              {form.latitude && form.longitude && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `https://maps.google.com/?q=${form.latitude},${form.longitude}`;
+                    setForm({ ...form, location_url: url });
+                  }}
+                  className="text-xs text-primary hover:underline mt-1"
+                >
+                  📍 إنشاء رابط تلقائي
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm({ ...form, active: v })} />
