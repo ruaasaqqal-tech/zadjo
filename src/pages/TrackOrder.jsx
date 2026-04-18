@@ -131,13 +131,13 @@ export default function TrackOrder() {
               key={order.id}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm space-y-4"
+              className="bg-card rounded-2xl p-5 border border-primary/10 shadow-md space-y-4 hover:shadow-lg transition-shadow"
             >
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
                   {order.kitchen_name && (
-                    <p className="text-sm font-bold text-orange-600 dark:text-orange-400">🏠 {order.kitchen_name}</p>
+                    <p className="text-sm font-bold text-primary dark:text-primary">🏠 {order.kitchen_name}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {order.created_date ? new Date(order.created_date).toLocaleString('ar-JO') : ''}
@@ -192,7 +192,7 @@ export default function TrackOrder() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="rounded-xl gap-1 text-amber-600 border-amber-300"
+                    className="rounded-xl gap-1 text-accent border-accent"
                     onClick={() => setReviewOrder(order)}
                   >
                     <Star className="h-3.5 w-3.5" />
@@ -201,7 +201,7 @@ export default function TrackOrder() {
                 )}
                 {isDelivered && alreadyReviewed && (
                   <span className="text-xs text-emerald-600 flex items-center gap-1">
-                    <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3.5 w-3.5 fill-accent text-accent" />
                     {t('rated')}
                   </span>
                 )}

@@ -47,7 +47,7 @@ export default function MealDetail() {
   };
 
   const handleWhatsApp = () => {
-    const msg = `مرحبا، بدي أطلب: ${meal.meal_name} (${qty} حبة)%0Aالسعر: ${(meal.price * qty).toFixed(2)} دينار%0Aالدفع: كاش عند الاستلام%0Aمن تطبيق لقمة بيت`;
+    const msg = `مرحبا، بدي أطلب: ${meal.meal_name} (${qty} حبة)%0Aالسعر: ${(meal.price * qty).toFixed(2)} دينار%0Aالدفع: كاش عند الاستلام%0Aمن تطبيق زاد جو`;
     window.open(`https://wa.me/962776241441?text=${msg}`, '_blank');
   };
 
@@ -62,7 +62,7 @@ export default function MealDetail() {
         العودة للقائمة
       </Link>
 
-      <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-border/50">
+      <div className="bg-card rounded-2xl overflow-hidden shadow-lg border border-primary/10">
         <div className="relative aspect-video">
           <img
             src={meal.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600'}
@@ -82,7 +82,7 @@ export default function MealDetail() {
             <span className="text-muted-foreground">•</span>
             <span className="text-sm text-muted-foreground">{meal.category}</span>
             <div className="flex items-center gap-1 mr-auto">
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+              <Star className="h-4 w-4 fill-accent text-accent" />
               <span className="text-sm font-bold">{meal.rating?.toFixed(1) || '—'}</span>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function MealDetail() {
           </div>
 
           <div className="flex gap-3">
-            <Button onClick={handleAddToCart} className="flex-1 h-12 rounded-2xl text-base font-bold gap-2">
+            <Button onClick={handleAddToCart} className="flex-1 h-12 rounded-2xl text-base font-bold gap-2 bg-primary hover:bg-secondary text-white shadow-md">
               <ShoppingCart className="h-5 w-5" />
               أضف للسلة
             </Button>

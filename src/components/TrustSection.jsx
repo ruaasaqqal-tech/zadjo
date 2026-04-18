@@ -12,13 +12,13 @@ export default function TrustSection() {
   const { t, lang } = useLang();
 
   return (
-    <section className="py-12 bg-accent/50">
+    <section className="py-12 bg-primary/5">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-2xl font-bold text-center mb-2">
-          {lang === 'ar' ? 'لماذا لقمة بيت؟' : 'Why Lugma Bait?'}
+        <h2 className="text-2xl font-bold text-center mb-2 text-primary">
+          {lang === 'ar' ? 'لماذا زاد جو؟' : 'Why Zad JO?'}
         </h2>
         <p className="text-muted-foreground text-center text-sm mb-8">
-          {lang === 'ar' ? 'ثقة آلاف العملاء في السلط' : 'Trusted by thousands of customers in Salt'}
+          {lang === 'ar' ? 'ثقة آلاف العملاء الراضين' : 'Trusted by thousands of satisfied customers'}
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {FEATURES.map((f, i) => (
@@ -28,7 +28,7 @@ export default function TrustSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="bg-card rounded-2xl p-5 text-center shadow-sm border border-border/50"
+              className="bg-card rounded-2xl p-5 text-center shadow-md border border-primary/10 hover:shadow-lg transition-shadow"
             >
               <span className="text-3xl mb-3 block">{f.icon}</span>
               <h3 className="font-bold text-sm mb-1">{t(f.titleKey)}</h3>

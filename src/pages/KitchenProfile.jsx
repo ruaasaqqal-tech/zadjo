@@ -61,7 +61,7 @@ export default function KitchenProfile() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       {/* Kitchen Header */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-2xl overflow-hidden mb-4">
+      <div className="bg-gradient-to-br from-primary/5 to-secondary/5 dark:from-primary/20 dark:to-secondary/20 border border-primary/20 dark:border-primary/40 rounded-2xl overflow-hidden mb-4">
         {kitchen?.image && (
           <div className="h-44 overflow-hidden">
             <img src={kitchen.image} alt={decodedName} className="w-full h-full object-cover" />
@@ -69,13 +69,13 @@ export default function KitchenProfile() {
         )}
         <div className="p-5">
           <div className="flex items-center gap-2 mb-1">
-            <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-full">
-              <ChefHat className="h-5 w-5 text-orange-500" />
+            <div className="bg-primary/10 dark:bg-primary/30 p-2 rounded-full">
+              <ChefHat className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-2xl font-bold">{decodedName}</h1>
           </div>
           {kitchen?.specialty && (
-            <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">{kitchen.specialty}</p>
+            <p className="text-sm font-medium text-primary mb-1">{kitchen.specialty}</p>
           )}
           {kitchen?.description && (
             <p className="text-sm text-muted-foreground mb-3">{kitchen.description}</p>
@@ -92,7 +92,7 @@ export default function KitchenProfile() {
               </div>
             )}
             {!outOfRange && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary dark:bg-primary/30">
                 <Truck className="h-3.5 w-3.5" />
                 رسوم التوصيل: {deliveryFee.toFixed(2)} د.أ
               </div>
@@ -130,8 +130,8 @@ export default function KitchenProfile() {
               exit={{ y: 50, opacity: 0 }}
               className="bg-card rounded-2xl p-6 w-full max-w-sm border border-border"
             >
-              <div className="flex items-center gap-2 mb-3 text-amber-600">
-                <AlertTriangle className="h-5 w-5" />
+              <div className="flex items-center gap-2 mb-3 text-primary">
+              <AlertTriangle className="h-5 w-5" />
                 <h3 className="font-bold">تنبيه</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-2">يمكنك الطلب من مطبخ واحد في كل مرة.</p>
@@ -166,7 +166,7 @@ export default function KitchenProfile() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-card rounded-2xl border border-border/50 overflow-hidden flex items-center gap-4 p-3 shadow-sm cursor-pointer hover:border-primary/40 transition-colors"
+              className="bg-card rounded-2xl border border-primary/10 overflow-hidden flex items-center gap-4 p-3 shadow-md cursor-pointer hover:border-primary hover:shadow-lg transition-all"
               onClick={() => setSelectedMeal(meal)}
             >
               <img
@@ -182,7 +182,7 @@ export default function KitchenProfile() {
                 )}
                 {meal.rating > 0 && (
                   <div className="flex items-center gap-1 mb-1">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    <Star className="h-3 w-3 fill-accent text-accent" />
                     <span className="text-xs font-bold">{meal.rating.toFixed(1)}</span>
                   </div>
                 )}
@@ -192,7 +192,7 @@ export default function KitchenProfile() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="rounded-xl h-8 gap-1 px-3 text-green-600 border-green-300"
+                  className="rounded-xl h-8 gap-1 px-3 text-primary border-primary"
                   onClick={(e) => { e.stopPropagation(); window.open(buildWhatsAppURL(kitchen?.phone, meal.meal_name), '_blank'); }}
                 >
                   <span className="text-sm">💬</span>

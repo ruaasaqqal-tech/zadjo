@@ -18,7 +18,7 @@ export default function KitchenCard({ kitchen, index = 0 }) {
       className="flex-shrink-0 w-44 md:w-52"
     >
       <Link to={`/kitchen/${slug}`} className="block group">
-        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border border-orange-200/60 dark:border-orange-800/40 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+        <div className="bg-gradient-to-br from-primary/5 to-secondary/5 dark:from-primary/20 dark:to-secondary/20 border border-primary/20 dark:border-primary/40 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
           <div className="relative aspect-square overflow-hidden">
             {kitchen.image ? (
               <img
@@ -28,18 +28,18 @@ export default function KitchenCard({ kitchen, index = 0 }) {
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/50 dark:to-amber-900/50">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 dark:from-primary/40 dark:to-secondary/40">
                 <span className="text-5xl">🍲</span>
               </div>
             )}
             <div className="absolute top-2 right-2 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-full p-1.5">
-              <ChefHat className="h-3.5 w-3.5 text-orange-500" />
+              <ChefHat className="h-3.5 w-3.5 text-primary" />
             </div>
           </div>
           <div className="p-3">
             <h3 className="font-bold text-sm text-foreground leading-tight mb-0.5">{displayName}</h3>
             {displaySpecialty && (
-              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mb-1">{displaySpecialty}</p>
+              <p className="text-xs text-primary font-medium mb-1">{displaySpecialty}</p>
             )}
             {displayDesc && (
               <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{displayDesc}</p>

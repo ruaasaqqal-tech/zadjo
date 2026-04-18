@@ -99,10 +99,10 @@ export default function OrderConfirmation() {
       )}
 
       <div className="w-full space-y-3">
-        <Button onClick={handleTrackOrder} className="w-full h-12 rounded-2xl text-base font-bold bg-primary hover:bg-orange-700 text-white shadow-lg">
+        <Button onClick={handleTrackOrder} className="w-full h-12 rounded-2xl text-base font-bold bg-primary hover:bg-secondary text-white shadow-lg transition-colors">
           تتبع طلبك 📍
         </Button>
-        <Button onClick={() => navigate('/menu')} variant="outline" className="w-full h-12 rounded-2xl border-primary text-primary hover:bg-orange-50">
+        <Button onClick={() => navigate('/menu')} variant="outline" className="w-full h-12 rounded-2xl border-primary text-primary hover:bg-primary/5">
           استمر في التسوق
         </Button>
       </div>

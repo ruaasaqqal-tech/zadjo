@@ -36,7 +36,7 @@ export default function Home() {
     <div>
       <HeroBanner />
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
-        <div className="bg-card rounded-2xl p-4 shadow-lg border border-border/50 space-y-4">
+        <div className="bg-card rounded-2xl p-4 shadow-lg border border-primary/10 space-y-4">
           <SearchBar value={search} onChange={setSearch} />
           <CategoryBar selected={category} onSelect={setCategory} />
         </div>

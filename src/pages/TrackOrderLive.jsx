@@ -197,7 +197,7 @@ export default function TrackOrderLive() {
         </motion.div>
       )}
 
-      <Button onClick={() => navigate('/track-order')} className="w-full rounded-2xl bg-primary hover:bg-orange-700 text-white shadow-lg">
+      <Button onClick={() => navigate('/track-order')} className="w-full rounded-2xl bg-primary hover:bg-secondary text-white shadow-lg transition-colors">
         إلى قائمة الطلبات
       </Button>
     </div>

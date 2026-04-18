@@ -9,7 +9,7 @@ export default function HeroBanner() {
   const ArrowIcon = lang === 'ar' ? ArrowLeft : ArrowRight;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-white via-orange-50 to-green-50">
+    <section className="relative overflow-hidden bg-gradient-to-br from-white via-primary/5 to-secondary/5">
       <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row items-center gap-12">
           <motion.div
@@ -26,7 +26,7 @@ export default function HeroBanner() {
               🍽️ طعام منزلي أصلي
             </motion.div>
             <h1 className="text-5xl md:text-6xl font-black text-foreground mb-3 leading-tight">
-              <span className="bg-gradient-to-r from-primary via-orange-600 to-primary bg-clip-text text-transparent">Zad JO</span>
+              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">Zad JO</span>
             </h1>
             <h2 className="text-3xl font-bold text-secondary mb-6">زاد جو</h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto md:mx-0 leading-relaxed">
@@ -34,7 +34,7 @@ export default function HeroBanner() {
             </p>
             <div className="flex gap-3 justify-center md:justify-start">
               <Link to="/menu">
-                <Button size="lg" className="rounded-2xl px-8 h-12 text-base font-bold gap-2 bg-primary hover:bg-orange-700 shadow-lg">
+                <Button size="lg" className="rounded-2xl px-8 h-12 text-base font-bold gap-2 bg-primary hover:bg-secondary text-white shadow-lg transition-colors">
                   اطلب الآن
                   <ArrowIcon className="h-4 w-4" />
                 </Button>
@@ -49,7 +49,7 @@ export default function HeroBanner() {
             className="flex-1 relative"
           >
             <div className="relative w-64 h-64 md:w-80 md:h-80 mx-auto">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-secondary/20 rounded-full blur-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-secondary/30 rounded-full blur-3xl" />
               <img
                 src="https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=400&fit=crop"
                 alt={lang === 'ar' ? 'طعام بيتي' : 'Home-cooked food'}
