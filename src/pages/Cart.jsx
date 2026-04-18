@@ -174,7 +174,7 @@ export default function Cart() {
     clearCart();
     setSubmitting(false);
     toast.success(t('orderConfirmed'));
-    setTimeout(() => window.open(waUrl, '_blank'), 800);
+    window.open(waUrl, '_blank');
     navigate(`/order-success/${order.id}`);
   };
 
