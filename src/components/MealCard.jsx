@@ -46,7 +46,7 @@ export default function MealCard({ meal, index = 0 }) {
       transition={{ delay: index * 0.05, duration: 0.3 }}
     >
       <Link to={`/meal/${meal.id}`} className="block group">
-        <div className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-border/50">
+        <div className="bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border/50">
           <div className="relative aspect-[4/3] overflow-hidden">
             <img
               src={meal.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'}
@@ -80,7 +80,7 @@ export default function MealCard({ meal, index = 0 }) {
                 <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-xl" onClick={handleWhatsApp}>
                   <span className="text-sm">💬</span>
                 </Button>
-                <Button size="sm" className="h-8 rounded-xl gap-1 px-3" onClick={handleAddToCart}>
+                <Button size="sm" className="h-8 rounded-xl gap-1 px-3 bg-primary hover:bg-orange-700 text-white" onClick={handleAddToCart}>
                   <ShoppingCart className="h-3.5 w-3.5" />
                   <span className="text-xs">{t('addToCart')}</span>
                 </Button>

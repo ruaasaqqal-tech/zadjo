@@ -271,7 +271,7 @@ export default function Cart() {
         </p>
       </div>
 
-      <Button onClick={handleSubmit} disabled={submitting} className="w-full h-14 rounded-2xl text-lg font-bold">
+      <Button onClick={handleSubmit} disabled={submitting} className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-orange-700 text-white shadow-lg">
         {submitting ? t('sendingOrder') : `${t('confirmOrder')} — ${total.toFixed(2)} د.أ`}
       </Button>
     </div>

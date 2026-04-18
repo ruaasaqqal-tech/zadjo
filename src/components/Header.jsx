@@ -31,12 +31,12 @@ export default function Header() {
           </button>
         ) : null}
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md flex-shrink-0">
-            <span className="text-lg">🍽️</span>
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-orange-700 flex items-center justify-center shadow-lg flex-shrink-0">
+            <span className="text-xl font-bold text-white">Z</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-foreground leading-tight">لقمة بيت</h1>
-            <p className="text-[10px] text-muted-foreground leading-none">{t('freshFood')}</p>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-orange-700 bg-clip-text text-transparent leading-tight">Zad JO</h1>
+            <p className="text-[10px] text-secondary font-medium leading-none">زاد جو</p>
           </div>
         </Link>
 
