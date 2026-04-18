@@ -38,8 +38,7 @@ export default function Cart() {
   });
   const kitchen = kitchens[0];
 
-  const distance = null; // No longer using latitude/longitude
-  const deliveryFee = calcDeliveryFee(distance);
+  const deliveryFee = 0.5; // Fixed delivery fee
 
   // Auto-detect customer GPS on mount
   useEffect(() => {
@@ -111,11 +110,10 @@ export default function Cart() {
      const order = await base44.entities.Order.create({
        customer_name: customerName,
        phone: customerPhone,
-       address: form.address || `${customerCoords?.lat?.toFixed(5)}, ${customerCoords?.lng?.toFixed(5)}`,
+       address: form.address || 'عنوان غير محدد',
        notes: form.notes,
        kitchen_name: kitchenName || '',
        kitchen_location_url: kitchen?.location_url || '',
-       ...(customerCoords ? { customer_lat: customerCoords.lat, customer_lng: customerCoords.lng } : {}),
        items: cart.map(item => ({
          meal_id: item.meal_id,
          meal_name: item.meal_name,
@@ -259,7 +257,7 @@ export default function Cart() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between"><span className="text-muted-foreground">{t('subtotal')}</span><span>{subtotal.toFixed(2)} د.أ</span></div>
           {discount > 0 && <div className="flex justify-between text-emerald-600"><span>{t('discount')}</span><span>-{discount.toFixed(2)} د.أ</span></div>}
-          <div className="flex justify-between"><span className="text-muted-foreground">{t('delivery')}</span><span className="text-primary font-medium">{deliveryFee.toFixed(2)} د.أ{distance ? ` (${distance.toFixed(1)} كم)` : ''}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{t('delivery')}</span><span className="text-primary font-medium">{deliveryFee.toFixed(2)} د.أ</span></div>
           <div className="border-t border-border pt-2 flex justify-between text-lg font-bold">
             <span>{t('total')}</span>
             <span className="text-primary">{total.toFixed(2)} د.أ</span>
