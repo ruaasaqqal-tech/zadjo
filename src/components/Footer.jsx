@@ -15,8 +15,8 @@ export default function Footer() {
                 <span className="text-xl">🍽️</span>
               </div>
               <div>
-                <h3 className="text-xl font-bold">لقمة بيت</h3>
-                <p className="text-sm opacity-70">{t('freshFood')}</p>
+                <h3 className="text-xl font-bold">زاد جو</h3>
+                <p className="text-sm opacity-70">Zad JO</p>
               </div>
             </div>
             <p className="text-sm opacity-60 leading-relaxed">{t('footerDesc')}</p>
@@ -52,7 +52,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-background/10 mt-8 pt-6 text-center space-y-1">
-          <p className="text-sm opacity-50">© 2026 لقمة بيت — {t('allRightsReserved')}</p>
+          <p className="text-sm opacity-50">© 2026 زاد جو (Zad JO) — {t('allRightsReserved')}</p>
           <p className="text-sm opacity-40">{t('madeIn')}</p>
         </div>
       </div>
