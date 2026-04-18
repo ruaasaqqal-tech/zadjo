@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Phone, ArrowLeft, Loader2 } from 'lucide-react';
+import { MapPin, Phone, ArrowLeft, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useLang } from '@/lib/i18n';
@@ -156,6 +156,27 @@ export default function TrackOrderLive() {
           </div>
         )}
       </motion.div>
+
+      {/* Kitchen Location */}
+      {order.kitchen_location_url && order.status !== 'تم الطلب' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl p-5 border border-border/50 mb-6"
+        >
+          <h3 className="font-bold mb-3">موقع المطبخ</h3>
+          <a
+            href={order.kitchen_location_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-secondary text-white px-4 py-3 rounded-xl font-medium transition-colors"
+          >
+            <MapPin className="h-4 w-4" />
+            فتح على Google Maps
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </motion.div>
+      )}
 
       {/* Driver Info (if available) */}
       {order.status === 'في الطريق' && (

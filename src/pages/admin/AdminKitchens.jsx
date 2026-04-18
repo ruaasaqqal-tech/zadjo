@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Pencil, Trash2, ChefHat, MapPin, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', latitude: '', longitude: '', location_url: '', active: true };
+const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', location_url: '', active: true };
 
 export default function AdminKitchens() {
   const queryClient = useQueryClient();
@@ -24,7 +24,7 @@ export default function AdminKitchens() {
   });
 
   const openNew = () => { setForm(EMPTY); setEditing(null); setOpen(true); };
-  const openEdit = (k) => { setForm({ ...k, latitude: k.latitude ?? '', longitude: k.longitude ?? '', location_url: k.location_url ?? '' }); setEditing(k.id); setOpen(true); };
+  const openEdit = (k) => { setForm({ ...k, location_url: k.location_url ?? '' }); setEditing(k.id); setOpen(true); };
 
   const handleSave = async () => {
     if (!form.cook_name.trim()) { toast.error('اسم المطبخ مطلوب'); return; }
@@ -88,14 +88,9 @@ export default function AdminKitchens() {
                 </div>
                 {k.specialty && <p className="text-xs text-orange-600 dark:text-orange-400">{k.specialty}</p>}
                 {k.phone && <p className="text-xs text-muted-foreground">📞 {k.phone}</p>}
-                {k.latitude && k.longitude && (
-                   <p className="text-xs text-muted-foreground flex items-center gap-1">
-                     <MapPin className="h-3 w-3" />{k.latitude.toFixed(4)}, {k.longitude.toFixed(4)}
-                   </p>
-                 )}
                  {k.location_url && (
                    <a href={k.location_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
-                     <ExternalLink className="h-3 w-3" /> فتح الموقع
+                     <MapPin className="h-3 w-3" /> فتح الموقع
                    </a>
                  )}
               </div>
@@ -134,37 +129,15 @@ export default function AdminKitchens() {
               <Label>رابط الصورة</Label>
               <Input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} className="rounded-xl mt-1" placeholder="https://..." dir="ltr" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>خط العرض (Lat)</Label>
-                <Input value={form.latitude} onChange={e => setForm({ ...form, latitude: e.target.value })} className="rounded-xl mt-1" placeholder="31.8765" dir="ltr" type="number" step="any" />
-              </div>
-              <div>
-                <Label>خط الطول (Lng)</Label>
-                <Input value={form.longitude} onChange={e => setForm({ ...form, longitude: e.target.value })} className="rounded-xl mt-1" placeholder="35.9876" dir="ltr" type="number" step="any" />
-              </div>
-            </div>
             <div>
-              <Label>رابط الموقع (Google Maps)</Label>
+              <Label>رابط الموقع على Google Maps *</Label>
               <Input 
                 value={form.location_url} 
                 onChange={e => setForm({ ...form, location_url: e.target.value })} 
                 className="rounded-xl mt-1" 
-                placeholder="https://maps.google.com/?q=31.8765,35.9876" 
+                placeholder="https://maps.google.com/?q=Salt,Jordan" 
                 dir="ltr" 
               />
-              {form.latitude && form.longitude && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const url = `https://maps.google.com/?q=${form.latitude},${form.longitude}`;
-                    setForm({ ...form, location_url: url });
-                  }}
-                  className="text-xs text-primary hover:underline mt-1"
-                >
-                  📍 إنشاء رابط تلقائي
-                </button>
-              )}
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm({ ...form, active: v })} />

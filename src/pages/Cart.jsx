@@ -38,9 +38,7 @@ export default function Cart() {
   });
   const kitchen = kitchens[0];
 
-  const distance = userLoc && kitchen?.latitude && kitchen?.longitude
-    ? calcDistance(userLoc.lat, userLoc.lng, kitchen.latitude, kitchen.longitude)
-    : null;
+  const distance = null; // No longer using latitude/longitude
   const deliveryFee = calcDeliveryFee(distance);
 
   // Auto-detect customer GPS on mount
@@ -109,29 +107,30 @@ export default function Cart() {
     }
 
     setSubmitting(true);
-    const kitchenName = getCartKitchen(cart);
-    const order = await base44.entities.Order.create({
-      customer_name: customerName,
-      phone: customerPhone,
-      address: form.address || `${customerCoords?.lat?.toFixed(5)}, ${customerCoords?.lng?.toFixed(5)}`,
-      notes: form.notes,
-      kitchen_name: kitchenName || '',
-      ...(customerCoords ? { customer_lat: customerCoords.lat, customer_lng: customerCoords.lng } : {}),
-      items: cart.map(item => ({
-        meal_id: item.meal_id,
-        meal_name: item.meal_name,
-        cook_name: item.cook_name,
-        price: item.price,
-        quantity: item.quantity,
-        addons_label: item.addons_label || '',
-      })),
-      subtotal,
-      discount,
-      delivery_fee: deliveryFee,
-      total,
-      coupon_code: discountInfo?.code || '',
-      status: 'تم الطلب',
-    });
+     const kitchenName = getCartKitchen(cart);
+     const order = await base44.entities.Order.create({
+       customer_name: customerName,
+       phone: customerPhone,
+       address: form.address || `${customerCoords?.lat?.toFixed(5)}, ${customerCoords?.lng?.toFixed(5)}`,
+       notes: form.notes,
+       kitchen_name: kitchenName || '',
+       kitchen_location_url: kitchen?.location_url || '',
+       ...(customerCoords ? { customer_lat: customerCoords.lat, customer_lng: customerCoords.lng } : {}),
+       items: cart.map(item => ({
+         meal_id: item.meal_id,
+         meal_name: item.meal_name,
+         cook_name: item.cook_name,
+         price: item.price,
+         quantity: item.quantity,
+         addons_label: item.addons_label || '',
+       })),
+       subtotal,
+       discount,
+       delivery_fee: deliveryFee,
+       total,
+       coupon_code: discountInfo?.code || '',
+       status: 'تم الطلب',
+     });
 
     if (discountInfo) {
       await base44.entities.Coupon.update(discountInfo.id, { usage_count: (discountInfo.usage_count || 0) + 1 });
