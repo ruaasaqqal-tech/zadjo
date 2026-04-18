@@ -93,7 +93,7 @@ export default function Cart() {
     toast.success(`✅ ${t('couponApplied')}: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
   };
 
-  const BUSINESS_WHATSAPP = '962790607665';
+  
 
   const handleSubmit = async () => {
     if (!form.address && !customerCoords) {
@@ -146,36 +146,10 @@ export default function Cart() {
       } catch (e) { /* ignore */ }
     }
 
-    // Build WhatsApp message
-    const itemsLines = cart.map(i =>
-      `- ${i.meal_name} ×${i.quantity}${i.addons_label ? ` (${i.addons_label})` : ''}: ${(i.price * i.quantity).toFixed(2)} د.أ`
-    ).join('\n');
-    const gpsLine = customerCoords
-      ? `\nالموقع الدقيق: https://maps.google.com/?q=${customerCoords.lat},${customerCoords.lng}`
-      : '';
-    const waMsg = [
-      `🛒 *طلب جديد*`,
-      `الاسم: ${customerName}`,
-      `الهاتف: ${customerPhone}`,
-      `العنوان: ${form.address}${gpsLine}`,
-      ``,
-      `*الوجبات:*`,
-      itemsLines,
-      ``,
-      `التوصيل: ${deliveryFee.toFixed(2)} د.أ`,
-      discount > 0 ? `الخصم: -${discount.toFixed(2)} د.أ` : null,
-      `*المجموع: ${total.toFixed(2)} د.أ*`,
-      form.notes ? `ملاحظات: ${form.notes}` : null,
-      `وقت الطلب: ${new Date().toLocaleString('ar-JO')}`,
-    ].filter(Boolean).join('\n');
-
-    const waUrl = `https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
-
     clearCart();
     setSubmitting(false);
     toast.success(t('orderConfirmed'));
-    window.open(waUrl, '_blank');
-    navigate(`/order-success/${order.id}`);
+    navigate(`/order-confirmation/${order.id}`);
   };
 
   if (cart.length === 0) {

@@ -13,7 +13,9 @@ import Menu from './pages/Menu';
 import MealDetail from './pages/MealDetail';
 import Cart from './pages/Cart';
 import OrderSuccess from './pages/OrderSuccess';
+import OrderConfirmation from './pages/OrderConfirmation';
 import TrackOrder from './pages/TrackOrder';
+import TrackOrderLive from './pages/TrackOrderLive';
 import Dashboard from './pages/admin/Dashboard';
 import AdminMeals from './pages/admin/AdminMeals';
 import AdminOrders from './pages/admin/AdminOrders';
@@ -54,7 +56,9 @@ const AuthenticatedApp = () => {
         <Route path="/meal/:id" element={<MealDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+        <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
         <Route path="/track-order" element={<TrackOrder />} />
+        <Route path="/track-order-live/:orderId" element={<TrackOrderLive />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/kitchen/:cookName" element={<KitchenProfile />} />
       </Route>
