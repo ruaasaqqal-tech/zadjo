@@ -1,20 +1,41 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Minus, Plus, ShoppingCart, ArrowRight } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, ArrowRight, LocateFixed, Loader2, CheckCircle2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartKitchen } from '@/lib/cartStore';
-import { calcDistance, calcDeliveryFee } from '@/lib/locationUtils';
-import useUserLocation from '@/hooks/useUserLocation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/i18n';
-import LocationPicker from '@/components/LocationPicker';
+
+// Haversine distance formula
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Extract lat/lng from a Google Maps URL
+function extractCoordsFromUrl(url) {
+  if (!url) return null;
+  const match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+                url.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+                url.match(/place\/[^/]+\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+  return null;
+}
+
+const MAX_DISTANCE_KM = 6;
 
 export default function Cart() {
   const { t, lang } = useLang();
@@ -22,13 +43,14 @@ export default function Cart() {
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [discountInfo, setDiscountInfo] = useState(null);
-  const [form, setForm] = useState({ address: '', notes: '' });
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [customerCoords, setCustomerCoords] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [manualAddress, setManualAddress] = useState('');
 
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { location: userLoc } = useUserLocation();
 
   const kitchenName = getCartKitchen(cart);
   const { data: kitchens = [] } = useQuery({
@@ -37,19 +59,19 @@ export default function Cart() {
     enabled: !!kitchenName,
   });
   const kitchen = kitchens[0];
+  const kitchenCoords = extractCoordsFromUrl(kitchen?.location_url);
 
-  const deliveryFee = 0.5; // Fixed delivery fee
+  const deliveryFee = 0.5;
 
-  // Auto-detect customer GPS on mount
+  // Distance calculation
+  const distance = customerCoords && kitchenCoords
+    ? calcDistance(customerCoords.lat, customerCoords.lng, kitchenCoords.lat, kitchenCoords.lng)
+    : null;
+  const tooFar = distance !== null && distance > MAX_DISTANCE_KM;
+
+  // Auto-detect GPS on mount
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCustomerCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      () => {},
-      { timeout: 8000, enableHighAccuracy: true }
-    );
+    detectLocation();
   }, []);
 
   useEffect(() => {
@@ -58,89 +80,97 @@ export default function Cart() {
     return () => window.removeEventListener('cart-updated', handler);
   }, []);
 
+  const detectLocation = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        let address = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ar`);
+          const data = await res.json();
+          if (data?.display_name) address = data.display_name;
+        } catch (_) {}
+        setCustomerCoords({ lat, lng, address });
+        setLocating(false);
+      },
+      () => { setLocating(false); },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
+
   const subtotal = getCartTotal(cart);
   const total = Math.max(0, subtotal - discount + deliveryFee);
 
   const applyCoupon = async () => {
     const trimmed = couponCode.trim().toUpperCase();
     if (!trimmed) return;
-    if (discountInfo && discountInfo.code === trimmed) {
-      toast.error(t('couponAlreadyApplied'));
-      return;
-    }
+    if (discountInfo && discountInfo.code === trimmed) { toast.error(t('couponAlreadyApplied')); return; }
     const allCoupons = await base44.entities.Coupon.list();
-    const coupon = allCoupons.find(
-      c => c.code?.trim().toUpperCase() === trimmed && c.active !== false
-    );
-    if (!coupon) {
-      toast.error(t('couponInvalid'));
-      setDiscount(0);
-      setDiscountInfo(null);
-      return;
-    }
-    if (coupon.min_order && subtotal < coupon.min_order) {
-      toast.error(`${t('couponMinOrder')} ${coupon.min_order} د.أ`);
-      return;
-    }
-    const d = coupon.discount_type === 'percentage'
-      ? subtotal * (coupon.discount_value / 100)
-      : coupon.discount_value;
+    const coupon = allCoupons.find(c => c.code?.trim().toUpperCase() === trimmed && c.active !== false);
+    if (!coupon) { toast.error(t('couponInvalid')); setDiscount(0); setDiscountInfo(null); return; }
+    if (coupon.min_order && subtotal < coupon.min_order) { toast.error(`${t('couponMinOrder')} ${coupon.min_order} د.أ`); return; }
+    const d = coupon.discount_type === 'percentage' ? subtotal * (coupon.discount_value / 100) : coupon.discount_value;
     setDiscount(d);
     setDiscountInfo(coupon);
-    toast.success(`✅ ${t('couponApplied')}: ${coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : coupon.discount_value + ' د.أ'}`);
+    toast.success(`✅ ${t('couponApplied')}`);
   };
 
-  
-
   const handleSubmit = async () => {
-    if (!form.address && !customerCoords) {
-      toast.error(t('addressRequired'));
+    // BLOCK: no customer location
+    if (!customerCoords?.lat || !customerCoords?.lng) {
+      toast.error('حدد موقعك أولاً');
       return;
     }
-    const customerName = user?.full_name || 'عميل';
+    // BLOCK: too far
+    if (tooFar) {
+      toast.error(`المطعم بعيد أكثر من ${MAX_DISTANCE_KM} كم`);
+      return;
+    }
     const customerPhone = user?.phone || '';
-
-    if (!customerPhone) {
-      toast.error(t('phoneRequired'));
-      return;
-    }
+    if (!customerPhone) { toast.error(t('phoneRequired')); return; }
 
     setSubmitting(true);
-     const kitchenName = getCartKitchen(cart);
-     const order = await base44.entities.Order.create({
-       customer_name: customerName,
-       phone: customerPhone,
-       address: form.address || 'عنوان غير محدد',
-       notes: form.notes,
-       kitchen_name: kitchenName || '',
-       kitchen_location_url: kitchen?.location_url || '',
-       items: cart.map(item => ({
-         meal_id: item.meal_id,
-         meal_name: item.meal_name,
-         cook_name: item.cook_name,
-         price: item.price,
-         quantity: item.quantity,
-         addons_label: item.addons_label || '',
-       })),
-       subtotal,
-       discount,
-       delivery_fee: deliveryFee,
-       total,
-       coupon_code: discountInfo?.code || '',
-       status: 'تم الطلب',
-     });
+    const orderAddress = customerCoords?.address || manualAddress || 'عنوان غير محدد';
+
+    const order = await base44.entities.Order.create({
+      customer_name: user?.full_name || 'عميل',
+      phone: customerPhone,
+      address: orderAddress,
+      notes,
+      kitchen_name: kitchenName || '',
+      kitchen_location_url: kitchen?.location_url || '',
+      restaurant_lat: kitchenCoords?.lat ?? null,
+      restaurant_lng: kitchenCoords?.lng ?? null,
+      customer_lat: customerCoords.lat,
+      customer_lng: customerCoords.lng,
+      distance_km: distance ? parseFloat(distance.toFixed(2)) : null,
+      items: cart.map(item => ({
+        meal_id: item.meal_id,
+        meal_name: item.meal_name,
+        cook_name: item.cook_name,
+        price: item.price,
+        quantity: item.quantity,
+        addons_label: item.addons_label || '',
+      })),
+      subtotal,
+      discount,
+      delivery_fee: deliveryFee,
+      total,
+      coupon_code: discountInfo?.code || '',
+      status: 'تم الطلب',
+    });
 
     if (discountInfo) {
       await base44.entities.Coupon.update(discountInfo.id, { usage_count: (discountInfo.usage_count || 0) + 1 });
     }
-
     for (const item of cart) {
       try {
         const meals = await base44.entities.Meal.filter({ id: item.meal_id });
-        if (meals[0]) {
-          await base44.entities.Meal.update(item.meal_id, { orders_count: (meals[0].orders_count || 0) + item.quantity });
-        }
-      } catch (e) { /* ignore */ }
+        if (meals[0]) await base44.entities.Meal.update(item.meal_id, { orders_count: (meals[0].orders_count || 0) + item.quantity });
+      } catch (_) {}
     }
 
     clearCart();
@@ -155,9 +185,7 @@ export default function Cart() {
         <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
         <h2 className="text-xl font-bold mb-2">{t('cartEmpty')}</h2>
         <p className="text-muted-foreground mb-6">{t('cartEmptyDesc')}</p>
-        <Link to="/menu">
-          <Button className="rounded-2xl px-8">{t('browseMenu')}</Button>
-        </Link>
+        <Link to="/menu"><Button className="rounded-2xl px-8">{t('browseMenu')}</Button></Link>
       </div>
     );
   }
@@ -171,37 +199,25 @@ export default function Cart() {
 
       <h1 className="text-2xl font-bold mb-6">{t('cartTitle')}</h1>
 
+      {/* Cart Items */}
       <div className="space-y-3 mb-6">
         <AnimatePresence>
           {cart.map((item) => (
-            <motion.div
-              key={item.meal_id}
-              layout
-              exit={{ opacity: 0, x: 50 }}
-              className="bg-card rounded-2xl p-4 border border-border/50 flex items-center gap-4"
-            >
-              <img
-                src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100'}
-                className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                alt={item.meal_name}
-              />
+            <motion.div key={item.meal_id} layout exit={{ opacity: 0, x: 50 }}
+              className="bg-card rounded-2xl p-4 border border-border/50 flex items-center gap-4">
+              <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100'}
+                className="w-16 h-16 rounded-xl object-cover flex-shrink-0" alt={item.meal_name} />
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-sm truncate">{item.meal_name}</h3>
                 <p className="text-xs text-muted-foreground">{item.cook_name}</p>
                 <p className="text-sm font-bold text-primary mt-1">{item.price} د.أ</p>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.meal_id, item.quantity - 1)}>
-                  <Minus className="h-3 w-3" />
-                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.meal_id, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
                 <span className="font-bold text-sm w-6 text-center">{item.quantity}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.meal_id, item.quantity + 1)}>
-                  <Plus className="h-3 w-3" />
-                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.meal_id, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeFromCart(item.meal_id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeFromCart(item.meal_id)}><Trash2 className="h-4 w-4" /></Button>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -211,17 +227,12 @@ export default function Cart() {
       <div className="bg-card rounded-2xl p-4 border border-border/50 mb-6">
         <Label className="text-sm font-medium mb-2 block">{t('discountCode')}</Label>
         <div className="flex gap-2">
-          <Input
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-            placeholder={t('enterCoupon')}
-            className="rounded-xl"
-          />
+          <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder={t('enterCoupon')} className="rounded-xl" />
           <Button onClick={applyCoupon} variant="outline" className="rounded-xl px-6">{t('apply')}</Button>
         </div>
       </div>
 
-      {/* Order Form */}
+      {/* Delivery Info */}
       <div className="bg-card rounded-2xl p-6 border border-border/50 mb-6 space-y-4">
         <h2 className="font-bold text-lg">{t('deliveryInfo')}</h2>
         {user && (
@@ -231,24 +242,53 @@ export default function Cart() {
           </div>
         )}
 
-        {/* Map-based location picker */}
-        <div>
-          <Label className="mb-2 block">📍 {t('address')} *</Label>
-          <LocationPicker
-            coords={customerCoords}
-            onCoordsChange={({ lat, lng, address }) => {
-              if (lat && lng) setCustomerCoords({ lat, lng });
-              setForm(f => ({ ...f, address }));
-            }}
-          />
-          {form.address && (
-            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">📌 {form.address}</p>
+        {/* Location Section */}
+        <div className="space-y-3">
+          <Label className="block">📍 موقعك *</Label>
+
+          {/* GPS Button */}
+          <button type="button" onClick={detectLocation} disabled={locating}
+            className={`w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-colors select-none ${
+              customerCoords ? 'bg-emerald-50 border-2 border-emerald-300 text-emerald-700' : 'bg-primary text-white'
+            }`}>
+            {locating ? <><Loader2 className="h-4 w-4 animate-spin" /> جارٍ تحديد موقعك...</>
+              : customerCoords ? <><CheckCircle2 className="h-4 w-4" /> تم تحديد موقعك — انقر لإعادة التحديد</>
+              : <><LocateFixed className="h-4 w-4" /> حدد موقعي تلقائياً 📍</>}
+          </button>
+
+          {/* Confirmed location */}
+          {customerCoords && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 flex items-start gap-2">
+              <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <p className="text-xs leading-relaxed">{customerCoords.address}</p>
+            </div>
+          )}
+
+          {/* Distance badge */}
+          {distance !== null && (
+            <div className={`rounded-xl px-4 py-2.5 text-sm font-bold flex items-center gap-2 ${
+              tooFar ? 'bg-red-50 border border-red-300 text-red-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
+            }`}>
+              <MapPin className="h-4 w-4" />
+              {tooFar
+                ? `❌ المطعم بعيد أكثر من ${MAX_DISTANCE_KM} كم (${distance.toFixed(1)} كم) — لا يمكن الطلب`
+                : `يبعد عنك ${distance.toFixed(1)} كم`}
+            </div>
+          )}
+
+          {/* Manual address fallback */}
+          {!customerCoords && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1.5">أو أدخل عنوانك يدوياً:</p>
+              <Input value={manualAddress} onChange={(e) => setManualAddress(e.target.value)}
+                placeholder="مثال: شارع الجامعة، السلط" className="rounded-xl" />
+            </div>
           )}
         </div>
 
         <div>
           <Label>{t('notes')}</Label>
-          <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="rounded-xl mt-1" placeholder={t('notesPlaceholder')} />
+          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-xl mt-1" placeholder={t('notesPlaceholder')} />
         </div>
       </div>
 
@@ -263,12 +303,11 @@ export default function Cart() {
             <span className="text-primary">{total.toFixed(2)} د.أ</span>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-          💰 {t('cashOnDelivery')}
-        </p>
+        <p className="text-xs text-muted-foreground mt-3">💰 {t('cashOnDelivery')}</p>
       </div>
 
-      <Button onClick={handleSubmit} disabled={submitting} className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-secondary text-white shadow-lg transition-colors">
+      <Button onClick={handleSubmit} disabled={submitting || tooFar || (!customerCoords && !manualAddress)}
+        className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-secondary text-white shadow-lg transition-colors disabled:opacity-50">
         {submitting ? t('sendingOrder') : `${t('confirmOrder')} — ${total.toFixed(2)} د.أ`}
       </Button>
     </div>
