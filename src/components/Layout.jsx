@@ -10,7 +10,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col font-cairo">
       <Header />
-      <main className="flex-1 md:pb-0 overflow-x-hidden" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
+      <main className="flex-1 md:pb-0 overflow-x-hidden" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}

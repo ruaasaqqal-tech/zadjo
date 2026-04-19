@@ -25,15 +25,16 @@ export default function BottomTabs() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: '64px' }}>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex flex-col"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex w-full">
       {TABS.map(({ path, label, icon: Icon }) => {
         const active = pathname === path;
         return (
           <Link
             key={path}
             to={path}
-            className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 select-none transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}
+            className={`flex-1 flex flex-col items-center justify-center h-16 gap-0.5 select-none transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}
           >
             <div className="relative">
               <Icon className="h-5 w-5" />
@@ -47,6 +48,7 @@ export default function BottomTabs() {
           </Link>
         );
       })}
+      </div>
     </nav>
   );
 }
