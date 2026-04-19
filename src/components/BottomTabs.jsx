@@ -26,7 +26,7 @@ export default function BottomTabs() {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: '64px' }}>
       {TABS.map(({ path, label, icon: Icon }) => {
         const active = pathname === path;
         return (
