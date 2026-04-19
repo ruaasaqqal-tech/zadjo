@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Pencil, Trash2, ChefHat, MapPin, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', location_url: '', active: true };
+const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', location_url: '', latitude: '', longitude: '', active: true };
 
 export default function AdminKitchens() {
   const queryClient = useQueryClient();
@@ -130,15 +130,44 @@ export default function AdminKitchens() {
               <Input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} className="rounded-xl mt-1" placeholder="https://..." dir="ltr" />
             </div>
             <div>
-              <Label>رابط الموقع على Google Maps *</Label>
-              <Input 
-                value={form.location_url} 
-                onChange={e => setForm({ ...form, location_url: e.target.value })} 
-                className="rounded-xl mt-1" 
-                placeholder="https://maps.google.com/?q=Salt,Jordan" 
-                dir="ltr" 
+              <Label>رابط الموقع على Google Maps</Label>
+              <Input
+                value={form.location_url}
+                onChange={e => setForm({ ...form, location_url: e.target.value })}
+                className="rounded-xl mt-1"
+                placeholder="https://maps.google.com/?q=Salt,Jordan"
+                dir="ltr"
               />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>خط العرض (Latitude) *</Label>
+                <Input
+                  value={form.latitude}
+                  onChange={e => setForm({ ...form, latitude: e.target.value })}
+                  className="rounded-xl mt-1"
+                  placeholder="32.0354"
+                  dir="ltr"
+                  type="number"
+                  step="any"
+                />
+              </div>
+              <div>
+                <Label>خط الطول (Longitude) *</Label>
+                <Input
+                  value={form.longitude}
+                  onChange={e => setForm({ ...form, longitude: e.target.value })}
+                  className="rounded-xl mt-1"
+                  placeholder="35.7272"
+                  dir="ltr"
+                  type="number"
+                  step="any"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">
+              💡 افتح Google Maps → ابحث عن موقع المطبخ → انقر كليك يمين → انسخ الإحداثيات
+            </p>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm({ ...form, active: v })} />
               <Label>نشط (ظاهر للمستخدمين)</Label>

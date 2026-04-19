@@ -38,6 +38,14 @@
       "type": "string",
       "title": "\u0631\u0627\u0628\u0637 \u0627\u0644\u0645\u0648\u0642\u0639 (Google Maps)"
     },
+    "latitude": {
+      "type": "number",
+      "title": "\u062e\u0637 \u0627\u0644\u0639\u0631\u0636 (Latitude)"
+    },
+    "longitude": {
+      "type": "number",
+      "title": "\u062e\u0637 \u0627\u0644\u0637\u0648\u0644 (Longitude)"
+    },
     "active": {
       "type": "boolean",
       "title": "\u0646\u0634\u0637",

@@ -13,29 +13,16 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/i18n';
 
-// Haversine distance formula
 function calcDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Extract lat/lng from a Google Maps URL
-function extractCoordsFromUrl(url) {
-  if (!url) return null;
-  const match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-                url.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-                url.match(/place\/[^/]+\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-  if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
-  return null;
-}
-
-const MAX_DISTANCE_KM = 6;
+const MAX_KM = 6;
 
 export default function Cart() {
   const { t, lang } = useLang();
@@ -45,9 +32,8 @@ export default function Cart() {
   const [discountInfo, setDiscountInfo] = useState(null);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [customerCoords, setCustomerCoords] = useState(null);
+  const [customerCoords, setCustomerCoords] = useState(null); // { lat, lng, address }
   const [locating, setLocating] = useState(false);
-  const [manualAddress, setManualAddress] = useState('');
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,20 +45,23 @@ export default function Cart() {
     enabled: !!kitchenName,
   });
   const kitchen = kitchens[0];
-  const kitchenCoords = extractCoordsFromUrl(kitchen?.location_url);
+
+  // Kitchen must have latitude & longitude in DB
+  const restaurantLat = kitchen?.latitude ?? null;
+  const restaurantLng = kitchen?.longitude ?? null;
+  const hasKitchenCoords = restaurantLat !== null && restaurantLng !== null;
 
   const deliveryFee = 0.5;
+  const subtotal = getCartTotal(cart);
+  const total = Math.max(0, subtotal - discount + deliveryFee);
 
-  // Distance calculation
-  const distance = customerCoords && kitchenCoords
-    ? calcDistance(customerCoords.lat, customerCoords.lng, kitchenCoords.lat, kitchenCoords.lng)
+  const distance = customerCoords && hasKitchenCoords
+    ? calcDistance(customerCoords.lat, customerCoords.lng, restaurantLat, restaurantLng)
     : null;
-  const tooFar = distance !== null && distance > MAX_DISTANCE_KM;
+  const tooFar = distance !== null && distance > MAX_KM;
 
   // Auto-detect GPS on mount
-  useEffect(() => {
-    detectLocation();
-  }, []);
+  useEffect(() => { detectLocation(); }, []);
 
   useEffect(() => {
     const handler = () => setCart(getCart());
@@ -96,18 +85,15 @@ export default function Cart() {
         setCustomerCoords({ lat, lng, address });
         setLocating(false);
       },
-      () => { setLocating(false); },
+      () => setLocating(false),
       { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
-  const subtotal = getCartTotal(cart);
-  const total = Math.max(0, subtotal - discount + deliveryFee);
-
   const applyCoupon = async () => {
     const trimmed = couponCode.trim().toUpperCase();
     if (!trimmed) return;
-    if (discountInfo && discountInfo.code === trimmed) { toast.error(t('couponAlreadyApplied')); return; }
+    if (discountInfo?.code === trimmed) { toast.error(t('couponAlreadyApplied')); return; }
     const allCoupons = await base44.entities.Coupon.list();
     const coupon = allCoupons.find(c => c.code?.trim().toUpperCase() === trimmed && c.active !== false);
     if (!coupon) { toast.error(t('couponInvalid')); setDiscount(0); setDiscountInfo(null); return; }
@@ -119,34 +105,37 @@ export default function Cart() {
   };
 
   const handleSubmit = async () => {
-    // BLOCK: no customer location
+    // BLOCK: no customer GPS
     if (!customerCoords?.lat || !customerCoords?.lng) {
       toast.error('حدد موقعك أولاً');
       return;
     }
+    // BLOCK: no kitchen coords → admin must add lat/lng to kitchen
+    if (!hasKitchenCoords) {
+      toast.error('لم يتم إضافة إحداثيات المطبخ بعد، تواصل مع الإدارة');
+      return;
+    }
     // BLOCK: too far
     if (tooFar) {
-      toast.error(`المطعم بعيد أكثر من ${MAX_DISTANCE_KM} كم`);
+      toast.error(`المطعم بعيد أكثر من ${MAX_KM} كم`);
       return;
     }
     const customerPhone = user?.phone || '';
     if (!customerPhone) { toast.error(t('phoneRequired')); return; }
 
     setSubmitting(true);
-    const orderAddress = customerCoords?.address || manualAddress || 'عنوان غير محدد';
-
     const order = await base44.entities.Order.create({
       customer_name: user?.full_name || 'عميل',
       phone: customerPhone,
-      address: orderAddress,
+      address: customerCoords.address,
       notes,
       kitchen_name: kitchenName || '',
       kitchen_location_url: kitchen?.location_url || '',
-      restaurant_lat: kitchenCoords?.lat ?? null,
-      restaurant_lng: kitchenCoords?.lng ?? null,
+      restaurant_lat: restaurantLat,
+      restaurant_lng: restaurantLng,
       customer_lat: customerCoords.lat,
       customer_lng: customerCoords.lng,
-      distance_km: distance ? parseFloat(distance.toFixed(2)) : null,
+      distance_km: parseFloat(distance.toFixed(2)),
       items: cart.map(item => ({
         meal_id: item.meal_id,
         meal_name: item.meal_name,
@@ -242,46 +231,48 @@ export default function Cart() {
           </div>
         )}
 
-        {/* Location Section */}
+        {/* Location */}
         <div className="space-y-3">
           <Label className="block">📍 موقعك *</Label>
 
-          {/* GPS Button */}
           <button type="button" onClick={detectLocation} disabled={locating}
             className={`w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-colors select-none ${
-              customerCoords ? 'bg-emerald-50 border-2 border-emerald-300 text-emerald-700' : 'bg-primary text-white'
+              customerCoords
+                ? 'bg-emerald-50 border-2 border-emerald-300 text-emerald-700'
+                : 'bg-primary text-white'
             }`}>
-            {locating ? <><Loader2 className="h-4 w-4 animate-spin" /> جارٍ تحديد موقعك...</>
-              : customerCoords ? <><CheckCircle2 className="h-4 w-4" /> تم تحديد موقعك — انقر لإعادة التحديد</>
+            {locating
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> جارٍ تحديد موقعك...</>
+              : customerCoords
+              ? <><CheckCircle2 className="h-4 w-4" /> تم تحديد الموقع — انقر لإعادة التحديد</>
               : <><LocateFixed className="h-4 w-4" /> حدد موقعي تلقائياً 📍</>}
           </button>
 
-          {/* Confirmed location */}
           {customerCoords && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 flex items-start gap-2">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-xs text-emerald-700 flex items-start gap-2">
               <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <p className="text-xs leading-relaxed">{customerCoords.address}</p>
+              <p className="leading-relaxed">{customerCoords.address}</p>
             </div>
           )}
 
           {/* Distance badge */}
           {distance !== null && (
             <div className={`rounded-xl px-4 py-2.5 text-sm font-bold flex items-center gap-2 ${
-              tooFar ? 'bg-red-50 border border-red-300 text-red-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
+              tooFar
+                ? 'bg-red-50 border border-red-300 text-red-700'
+                : 'bg-blue-50 border border-blue-200 text-blue-700'
             }`}>
               <MapPin className="h-4 w-4" />
               {tooFar
-                ? `❌ المطعم بعيد أكثر من ${MAX_DISTANCE_KM} كم (${distance.toFixed(1)} كم) — لا يمكن الطلب`
+                ? `❌ المطعم بعيد أكثر من ${MAX_KM} كم (${distance.toFixed(1)} كم)`
                 : `يبعد عنك ${distance.toFixed(1)} كم`}
             </div>
           )}
 
-          {/* Manual address fallback */}
-          {!customerCoords && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-1.5">أو أدخل عنوانك يدوياً:</p>
-              <Input value={manualAddress} onChange={(e) => setManualAddress(e.target.value)}
-                placeholder="مثال: شارع الجامعة، السلط" className="rounded-xl" />
+          {/* No kitchen coords warning */}
+          {kitchen && !hasKitchenCoords && (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl px-4 py-2.5 text-sm text-amber-700">
+              ⚠️ لم يتم إضافة إحداثيات هذا المطبخ بعد
             </div>
           )}
         </div>
@@ -306,8 +297,11 @@ export default function Cart() {
         <p className="text-xs text-muted-foreground mt-3">💰 {t('cashOnDelivery')}</p>
       </div>
 
-      <Button onClick={handleSubmit} disabled={submitting || tooFar || (!customerCoords && !manualAddress)}
-        className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-secondary text-white shadow-lg transition-colors disabled:opacity-50">
+      <Button
+        onClick={handleSubmit}
+        disabled={submitting || tooFar || !customerCoords || !hasKitchenCoords}
+        className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-secondary text-white shadow-lg transition-colors disabled:opacity-50"
+      >
         {submitting ? t('sendingOrder') : `${t('confirmOrder')} — ${total.toFixed(2)} د.أ`}
       </Button>
     </div>
