@@ -80,7 +80,7 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
           )}
         </div>
 
-        <div className="p-5 max-h-[55vh] overflow-y-auto">
+        <div className="p-5 max-h-[48vh] overflow-y-auto">
           {/* Meal Info */}
           <div className="mb-4">
             <h2 className="text-xl font-bold mb-1">{displayName}</h2>
