@@ -129,19 +129,17 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
           )}
 
           {/* Total + Add to Cart */}
-          <div className="mt-5 rounded-2xl bg-primary/10 border-2 border-primary p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">{t('totalAmount')}</p>
-                <p className="text-2xl font-extrabold text-primary">{total.toFixed(2)} <span className="text-base font-bold">د.أ</span></p>
-              </div>
-              <div className="text-left text-xs text-muted-foreground">
-                {addonsTotal > 0 && (
-                  <p>الوجبة: {meal.price} + إضافات: {addonsTotal.toFixed(2)}</p>
-                )}
-              </div>
+          <div className="mt-5 flex items-center gap-3">
+            {/* Total */}
+            <div className="flex-1 rounded-2xl bg-primary/10 border-2 border-primary px-4 py-3 text-center">
+              <p className="text-xs text-muted-foreground font-medium">{t('totalAmount')}</p>
+              <p className="text-2xl font-extrabold text-primary">{total.toFixed(2)} <span className="text-sm font-bold">د.أ</span></p>
+              {addonsTotal > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">{meal.price} + {addonsTotal.toFixed(2)}</p>
+              )}
             </div>
-            <Button onClick={handleAdd} className="w-full rounded-2xl gap-2 text-base font-bold py-3.5">
+            {/* Add to Cart */}
+            <Button onClick={handleAdd} className="flex-1 rounded-2xl gap-2 text-base font-bold h-full min-h-[72px]">
               <ShoppingCart className="h-5 w-5" />
               {t('addToCartBtn')}
             </Button>
