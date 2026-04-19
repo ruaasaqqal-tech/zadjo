@@ -66,18 +66,31 @@ export default function TrackOrder() {
     });
   }, [user?.email]);
 
+  // Real-time subscription — refresh from server on any update to ensure data is up-to-date
   useEffect(() => {
+    if (!user?.email) return;
     const unsubscribe = base44.entities.Order.subscribe((event) => {
       if (event.type === 'create') {
-        setOrders((prev) => prev.find(o => o.id === event.id) ? prev : [event.data, ...prev]);
+        const newOrder = event.data;
+        if (newOrder?.created_by === user.email) {
+          setOrders((prev) => prev.find(o => o.id === event.id) ? prev : [newOrder, ...prev]);
+        }
       } else if (event.type === 'update') {
-        setOrders((prev) => prev.map(o => o.id === event.id ? { ...o, ...event.data } : o));
+        setOrders((prev) => {
+          const exists = prev.find(o => o.id === event.id);
+          if (!exists) return prev;
+          return prev.map(o => o.id === event.id ? { ...o, ...event.data } : o);
+        });
+        // Also do a fresh fetch to ensure we have the latest
+        base44.entities.Order.filter({ created_by: user.email }, '-created_date', 20)
+          .then(data => setOrders(data))
+          .catch(() => {});
       } else if (event.type === 'delete') {
         setOrders((prev) => prev.filter(o => o.id !== event.id));
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [user?.email]);
 
   const handleCancel = async (order) => {
     if (!order) return;

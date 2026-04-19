@@ -35,15 +35,19 @@ export default function TrackOrderLive() {
 
   useEffect(() => {
     fetchOrder();
-    const interval = setInterval(fetchOrder, 4000);
+    // Poll every 5 seconds as fallback
+    const interval = setInterval(fetchOrder, 5000);
     return () => clearInterval(interval);
   }, [fetchOrder]);
 
-  // Real-time subscription
+  // Real-time subscription — primary update mechanism
   useEffect(() => {
     const unsubscribe = base44.entities.Order.subscribe((event) => {
-      if (event.id === orderId && event.type === 'update') {
-        setOrder(event.data);
+      if (event.id === orderId) {
+        if (event.type === 'update') {
+          // Merge update data
+          setOrder(prev => prev ? { ...prev, ...event.data } : event.data);
+        }
       }
     });
     return () => unsubscribe();
