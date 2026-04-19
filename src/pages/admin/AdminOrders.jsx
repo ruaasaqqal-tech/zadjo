@@ -71,17 +71,10 @@ export default function AdminOrders() {
   };
 
   const openNavigation = (order) => {
-    if (order.customer_lat && order.customer_lng) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${order.customer_lat},${order.customer_lng}`,
-        '_blank'
-      );
-    } else {
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`,
-        '_blank'
-      );
-    }
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`,
+      '_blank'
+    );
   };
 
   return (
@@ -127,7 +120,6 @@ export default function AdminOrders() {
             const config = STATUS_CONFIG[order.status] || STATUS_CONFIG['تم الطلب'];
             const Icon = config.icon;
             const nextStatus = getNextStatus(order.status);
-            const hasGPS = !!(order.customer_lat && order.customer_lng);
 
             return (
               <div key={order.id} className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm">
@@ -141,11 +133,6 @@ export default function AdminOrders() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">{order.phone} • {order.address}</p>
-                    {hasGPS && (
-                      <p className="text-xs text-emerald-600 mt-0.5">
-                        📍 GPS: {order.customer_lat?.toFixed(5)}, {order.customer_lng?.toFixed(5)}
-                      </p>
-                    )}
                     <p className="text-xs text-muted-foreground mt-1">
                       {order.created_date ? new Date(order.created_date).toLocaleString('ar-JO') : ''}
                     </p>
@@ -181,11 +168,11 @@ export default function AdminOrders() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className={`rounded-xl gap-1 ${hasGPS ? 'text-emerald-600 border-emerald-300' : ''}`}
+                    className="rounded-xl gap-1"
                     onClick={() => openNavigation(order)}
                   >
                     <Navigation className="h-3.5 w-3.5" />
-                    {hasGPS ? 'ملاحة دقيقة GPS' : 'فتح الخريطة'}
+                    فتح الخريطة
                   </Button>
                   {order.status !== 'ملغي' && order.status !== 'تم التوصيل' && (
                     <Button size="sm" variant="outline" className="rounded-xl text-destructive" onClick={() => updateStatus(order.id, 'ملغي')}>

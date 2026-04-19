@@ -23,6 +23,7 @@ import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminKitchens from './pages/admin/AdminKitchens';
 import Profile from './pages/Profile';
 import KitchenProfile from './pages/KitchenProfile';
+import DriverDashboard from './pages/driver/DriverDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +63,7 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/kitchen/:cookName" element={<KitchenProfile />} />
       </Route>
+      <Route path="/driver" element={<DriverDashboard />} />
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/meals" element={<AdminMeals />} />
