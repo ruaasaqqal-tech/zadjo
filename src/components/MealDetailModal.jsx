@@ -52,15 +52,16 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: 60, opacity: 0 }}
+        initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 60, opacity: 0 }}
+        exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 25 }}
-        className="bg-card w-full md:max-w-md rounded-t-3xl md:rounded-2xl overflow-hidden border border-border"
+        className="bg-card w-full md:max-w-md md:rounded-2xl overflow-hidden border border-border flex flex-col"
+        style={{ height: '100dvh', maxHeight: '100dvh' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Image */}
-        <div className="relative h-52 overflow-hidden">
+        <div className="relative h-56 flex-shrink-0 overflow-hidden">
           <img
             src={meal.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'}
             alt={meal.meal_name}
@@ -80,7 +81,8 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
           )}
         </div>
 
-        <div className="p-5 max-h-[48vh] overflow-y-auto">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-5">
           {/* Meal Info */}
           <div className="mb-4">
             <h2 className="text-xl font-bold mb-1">{displayName}</h2>
@@ -100,7 +102,7 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
 
           {/* Add-ons */}
           {addons.length > 0 && (
-            <div className="mb-5">
+            <div className="mb-4">
               <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wide">{t('optionalAddons')}</h3>
               <div className="space-y-2">
                 {addons.map((addon, idx) => (
@@ -127,23 +129,24 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
               </div>
             </div>
           )}
+        </div>
 
-          {/* Total + Add to Cart */}
-          <div className="mt-5 flex items-center gap-3">
-            {/* Total */}
-            <div className="flex-1 rounded-2xl bg-primary/10 border-2 border-primary px-4 py-3 text-center">
-              <p className="text-xs text-muted-foreground font-medium">{t('totalAmount')}</p>
-              <p className="text-2xl font-extrabold text-primary">{total.toFixed(2)} <span className="text-sm font-bold">د.أ</span></p>
-              {addonsTotal > 0 && (
-                <p className="text-xs text-muted-foreground mt-0.5">{meal.price} + {addonsTotal.toFixed(2)}</p>
-              )}
-            </div>
-            {/* Add to Cart */}
-            <Button onClick={handleAdd} className="flex-1 rounded-2xl gap-2 text-base font-bold h-full min-h-[72px]">
-              <ShoppingCart className="h-5 w-5" />
-              {t('addToCartBtn')}
-            </Button>
+        {/* Fixed bottom: Total + Add to Cart */}
+        <div className="flex-shrink-0 p-4 border-t border-border bg-card flex items-center gap-3"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          {/* Total */}
+          <div className="flex-1 rounded-2xl bg-primary/10 border-2 border-primary px-4 py-3 text-center">
+            <p className="text-xs text-muted-foreground font-medium">{t('totalAmount')}</p>
+            <p className="text-2xl font-extrabold text-primary">{total.toFixed(2)} <span className="text-sm font-bold">د.أ</span></p>
+            {addonsTotal > 0 && (
+              <p className="text-xs text-muted-foreground mt-0.5">{meal.price} + {addonsTotal.toFixed(2)}</p>
+            )}
           </div>
+          {/* Add to Cart */}
+          <Button onClick={handleAdd} className="flex-1 rounded-2xl gap-2 text-base font-bold min-h-[72px]">
+            <ShoppingCart className="h-5 w-5" />
+            {t('addToCartBtn')}
+          </Button>
         </div>
       </motion.div>
     </motion.div>
