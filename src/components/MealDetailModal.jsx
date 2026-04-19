@@ -80,7 +80,7 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
           )}
         </div>
 
-        <div className="p-5 max-h-[60vh] overflow-y-auto">
+        <div className="p-5 max-h-[55vh] overflow-y-auto">
           {/* Meal Info */}
           <div className="mb-4">
             <h2 className="text-xl font-bold mb-1">{displayName}</h2>
@@ -141,7 +141,7 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
                 )}
               </div>
             </div>
-            <Button onClick={handleAdd} className="w-full rounded-2xl gap-2 h-13 text-base font-bold py-4">
+            <Button onClick={handleAdd} className="w-full rounded-2xl gap-2 text-base font-bold py-3.5">
               <ShoppingCart className="h-5 w-5" />
               {t('addToCartBtn')}
             </Button>
