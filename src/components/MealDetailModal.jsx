@@ -129,13 +129,20 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
           )}
 
           {/* Total + Add to Cart */}
-          <div className="flex items-center justify-between border-t border-border pt-4">
-            <div>
-              <p className="text-xs text-muted-foreground">{t('totalAmount')}</p>
-              <p className="text-xl font-extrabold text-primary">{total.toFixed(2)} د.أ</p>
+          <div className="mt-5 rounded-2xl bg-primary/10 border-2 border-primary p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">{t('totalAmount')}</p>
+                <p className="text-2xl font-extrabold text-primary">{total.toFixed(2)} <span className="text-base font-bold">د.أ</span></p>
+              </div>
+              <div className="text-left text-xs text-muted-foreground">
+                {addonsTotal > 0 && (
+                  <p>الوجبة: {meal.price} + إضافات: {addonsTotal.toFixed(2)}</p>
+                )}
+              </div>
             </div>
-            <Button onClick={handleAdd} className="rounded-2xl px-6 gap-2 h-11">
-              <ShoppingCart className="h-4 w-4" />
+            <Button onClick={handleAdd} className="w-full rounded-2xl gap-2 h-13 text-base font-bold py-4">
+              <ShoppingCart className="h-5 w-5" />
               {t('addToCartBtn')}
             </Button>
           </div>
