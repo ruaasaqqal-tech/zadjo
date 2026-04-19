@@ -48,7 +48,7 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
+      className="fixed inset-0 bg-black/60 z-[100] flex items-end md:items-center justify-center p-0 md:p-4"
       onClick={onClose}
     >
       <motion.div
@@ -57,7 +57,7 @@ export default function MealDetailModal({ meal, kitchenName, onClose, onConflict
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 25 }}
         className="bg-card w-full md:max-w-md md:rounded-2xl overflow-hidden border border-border flex flex-col"
-        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        style={{ height: '100dvh', maxHeight: '100dvh', paddingBottom: 0 }}
         onClick={e => e.stopPropagation()}
       >
         {/* Image */}
