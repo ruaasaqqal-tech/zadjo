@@ -1,0 +1,42 @@
+{
+  "name": "NotificationQueue",
+  "type": "object",
+  "properties": {
+    "target_role": {
+      "type": "string",
+      "title": "\u0627\u0644\u062f\u0648\u0631 \u0627\u0644\u0645\u0633\u062a\u0647\u062f\u0641",
+      "enum": [
+        "customer",
+        "kitchen",
+        "driver",
+        "admin"
+      ]
+    },
+    "target_email": {
+      "type": "string",
+      "title": "\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0627\u0644\u0645\u0633\u062a\u0647\u062f\u0641 (\u0644\u0644\u0639\u0645\u064a\u0644)"
+    },
+    "order_id": {
+      "type": "string",
+      "title": "\u0645\u0639\u0631\u0641 \u0627\u0644\u0637\u0644\u0628"
+    },
+    "title": {
+      "type": "string",
+      "title": "\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0625\u0634\u0639\u0627\u0631"
+    },
+    "message": {
+      "type": "string",
+      "title": "\u0646\u0635 \u0627\u0644\u0625\u0634\u0639\u0627\u0631"
+    },
+    "read": {
+      "type": "boolean",
+      "title": "\u0645\u0642\u0631\u0648\u0621",
+      "default": false
+    }
+  },
+  "required": [
+    "target_role",
+    "title",
+    "message"
+  ]
+}

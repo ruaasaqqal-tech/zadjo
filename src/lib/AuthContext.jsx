@@ -2,6 +2,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 
 const AuthContext = createContext();
 
@@ -127,6 +129,10 @@ export const AuthProvider = ({ children }) => {
     // Use the SDK's redirectToLogin method
     base44.auth.redirectToLogin(window.location.href);
   };
+
+  // Register for notifications and listen for incoming ones
+  useNotifications(user);
+  useOrderNotifications(user);
 
   return (
     <AuthContext.Provider value={{ 

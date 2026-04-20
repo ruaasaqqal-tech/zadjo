@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Package, Clock, Truck, CheckCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { sendLocalNotification } from '@/hooks/useNotifications';
 
 const STATUS_CONFIG = {
   'تم الطلب':    { icon: Package,     color: 'bg-blue-100 text-blue-700',       step: 1 },
@@ -19,6 +20,30 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [showDone, setShowDone] = useState(false);
   const initialLoadDone = useRef(false);
+
+  // Request notification permission for driver
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Listen for notifications targeted to driver role
+  useEffect(() => {
+    const seenIds = new Set();
+    const unsubscribe = base44.entities.NotificationQueue.subscribe((event) => {
+      if (event.type !== 'create') return;
+      const notif = event.data;
+      if (!notif || seenIds.has(event.id)) return;
+      seenIds.add(event.id);
+      if (notif.target_role === 'driver') {
+        sendLocalNotification(notif.title, notif.message);
+        base44.entities.NotificationQueue.update(event.id, { read: true });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const fetchOrders = async () => {
     const data = await base44.entities.Order.list('-created_date', 100);
