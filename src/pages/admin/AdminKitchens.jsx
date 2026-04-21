@@ -7,16 +7,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, ChefHat, MapPin, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChefHat, MapPin, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', location_url: '', latitude: '', longitude: '', active: true };
+const EMPTY = { cook_name: '', description: '', image: '', specialty: '', phone: '', location_url: '', latitude: '', longitude: '', password: '', active: true };
+
+function generatePassword(length = 10) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
 
 export default function AdminKitchens() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [editing, setEditing] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: kitchens = [], isLoading } = useQuery({
     queryKey: ['kitchens-admin'],
@@ -168,6 +174,38 @@ export default function AdminKitchens() {
             <p className="text-xs text-muted-foreground -mt-2">
               💡 افتح Google Maps → ابحث عن موقع المطبخ → انقر كليك يمين → انسخ الإحداثيات
             </p>
+            <div>
+              <Label>كلمة مرور لوحة التحكم</Label>
+              <div className="relative mt-1">
+                <Input
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  className="rounded-xl pl-20"
+                  placeholder="أدخل كلمة مرور..."
+                  type={showPassword ? 'text' : 'password'}
+                  dir="ltr"
+                />
+                <div className="absolute left-1 top-1/2 -translate-y-1/2 flex gap-1">
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = generatePassword();
+                      setForm({ ...form, password: p });
+                      setShowPassword(true);
+                      toast.success(`تم توليد كلمة مرور جديدة: ${p}`);
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                    title="توليد كلمة مرور جديدة"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">اضغط <RefreshCw className="inline h-3 w-3" /> لتوليد كلمة مرور عشوائية جديدة</p>
+            </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.active} onCheckedChange={v => setForm({ ...form, active: v })} />
               <Label>نشط (ظاهر للمستخدمين)</Label>
