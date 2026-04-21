@@ -46,6 +46,10 @@
       "type": "number",
       "title": "\u062e\u0637 \u0627\u0644\u0637\u0648\u0644 (Longitude)"
     },
+    "password": {
+      "type": "string",
+      "title": "Kitchen login password for the kitchen dashboard"
+    },
     "active": {
       "type": "boolean",
       "title": "\u0646\u0634\u0637",
