@@ -5,7 +5,7 @@ export default function PrivacyPolicy() {
       <p className="text-xs text-muted-foreground mb-8">آخر تحديث: مايو 2026</p>
 
       <Section title="مقدمة">
-        تطبيق <strong>Zad JO - زاد جو</strong> ملتزم بحماية خصوصيتك. توضح هذه السياسة كيفية جمع بياناتك واستخدامها وحمايتها.
+        تطبيق <strong>Zadjo - زاد جو</strong> ملتزم بحماية خصوصيتك. توضح هذه السياسة كيفية جمع بياناتك واستخدامها وحمايتها.
       </Section>
 
       <Section title="المعلومات التي نجمعها">

@@ -26,7 +26,7 @@ export default function HeroBanner() {
               🍽️ طعام منزلي أصلي
             </motion.div>
             <h1 className="text-5xl md:text-6xl font-black text-foreground mb-3 leading-tight">
-              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">Zad JO</span>
+              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">Zadjo</span>
             </h1>
             <h2 className="text-3xl font-bold text-secondary mb-6">زاد جو</h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto md:mx-0 leading-relaxed">

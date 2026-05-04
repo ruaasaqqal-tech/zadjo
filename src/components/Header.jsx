@@ -45,8 +45,8 @@ export default function Header() {
             <span className="text-xl font-bold text-white">Z</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent leading-tight">Zad JO</h1>
-            <p className="text-[10px] text-accent font-bold leading-none">Premium</p>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent leading-tight">Zadjo</h1>
+            <p className="text-[10px] text-accent font-bold leading-none">زاد جو</p>
           </div>
         </Link>
 
