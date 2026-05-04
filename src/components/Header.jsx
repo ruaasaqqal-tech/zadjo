@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, ArrowRight, UserCircle } from 'lucide-react';
+import { ShoppingCart, Menu, X, ArrowLeft, ArrowRight, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCart, getCartCount } from '@/lib/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,10 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const isRoot = location.pathname === '/';
-  const isChildScreen = ['/meal/', '/kitchen/', '/track-order-live/', '/order-confirmation/', '/order-success/'].some(p => location.pathname.startsWith(p));
+  const isChildScreen = [
+    '/meal/', '/kitchen/', '/track-order-live/', '/order-confirmation/', '/order-success/',
+    '/profile', '/privacy-policy',
+  ].some(p => location.pathname.startsWith(p));
 
   useEffect(() => {
     const handler = () => setCart(getCart());
@@ -31,7 +34,10 @@ export default function Header() {
             onClick={() => navigate(-1)}
             className="flex items-center justify-center w-11 h-11 -mr-2 text-muted-foreground hover:text-foreground select-none transition-colors"
           >
-            <ArrowRight className="h-5 w-5" />
+            {lang === 'ar'
+              ? <ArrowRight className="h-5 w-5" />
+              : <ArrowLeft className="h-5 w-5" />
+            }
           </button>
         ) : null}
         <Link to="/" className="flex items-center gap-2 select-none">

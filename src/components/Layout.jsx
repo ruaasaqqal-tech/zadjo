@@ -1,11 +1,19 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Header from './Header';
 import Footer from './Footer';
 import BottomTabs from './BottomTabs';
+import { getRootTab, setTabPath } from '@/lib/tabMemory';
 
 export default function Layout() {
   const location = useLocation();
+
+  // Remember the last path visited per tab root
+  useEffect(() => {
+    const root = getRootTab(location.pathname);
+    if (root) setTabPath(root, location.pathname);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col font-cairo">
