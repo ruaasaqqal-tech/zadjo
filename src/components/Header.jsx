@@ -13,6 +13,7 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const isRoot = location.pathname === '/';
+  const isChildScreen = ['/meal/', '/kitchen/', '/track-order-live/', '/order-confirmation/', '/order-success/'].some(p => location.pathname.startsWith(p));
 
   useEffect(() => {
     const handler = () => setCart(getCart());
@@ -25,8 +26,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        {!isRoot ? (
-          <button onClick={() => navigate(-1)} className="md:hidden flex items-center gap-1 text-muted-foreground select-none">
+        {isChildScreen ? (
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center w-11 h-11 -mr-2 text-muted-foreground hover:text-foreground select-none transition-colors"
+          >
             <ArrowRight className="h-5 w-5" />
           </button>
         ) : null}

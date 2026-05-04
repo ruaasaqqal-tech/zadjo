@@ -124,6 +124,9 @@ export default function Cart() {
     if (!customerPhone) { toast.error(t('phoneRequired')); return; }
 
     setSubmitting(true);
+    const cartSnapshot = [...cart];
+    // Optimistically clear cart for instant feedback
+    clearCart();
     const order = await base44.entities.Order.create({
       customer_name: user?.full_name || 'عميل',
       phone: customerPhone,
@@ -152,20 +155,19 @@ export default function Cart() {
       status: 'تم الطلب',
     });
 
-    if (discountInfo) {
-      await base44.entities.Coupon.update(discountInfo.id, { usage_count: (discountInfo.usage_count || 0) + 1 });
-    }
-    for (const item of cart) {
-      try {
-        const meals = await base44.entities.Meal.filter({ id: item.meal_id });
-        if (meals[0]) await base44.entities.Meal.update(item.meal_id, { orders_count: (meals[0].orders_count || 0) + item.quantity });
-      } catch (_) {}
-    }
-
-    clearCart();
     setSubmitting(false);
     toast.success(t('orderConfirmed'));
     navigate(`/order-confirmation/${order.id}`);
+
+    // Fire-and-forget background updates
+    if (discountInfo) {
+      base44.entities.Coupon.update(discountInfo.id, { usage_count: (discountInfo.usage_count || 0) + 1 }).catch(() => {});
+    }
+    for (const item of cartSnapshot) {
+      base44.entities.Meal.filter({ id: item.meal_id }).then(meals => {
+        if (meals[0]) base44.entities.Meal.update(item.meal_id, { orders_count: (meals[0].orders_count || 0) + item.quantity });
+      }).catch(() => {});
+    }
   };
 
   if (cart.length === 0) {
