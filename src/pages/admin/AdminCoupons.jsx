@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MobileSelect from '@/components/MobileSelect';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
@@ -122,13 +122,16 @@ export default function AdminCoupons() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>نوع الخصم</Label>
-                <Select value={form.discount_type} onValueChange={v => setForm({ ...form, discount_type: v })}>
-                  <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">نسبة مئوية</SelectItem>
-                    <SelectItem value="fixed">مبلغ ثابت</SelectItem>
-                  </SelectContent>
-                </Select>
+                <MobileSelect
+                  value={form.discount_type}
+                  onValueChange={v => setForm({ ...form, discount_type: v })}
+                  placeholder="نوع الخصم"
+                  className="mt-1"
+                  options={[
+                    { value: 'percentage', label: 'نسبة مئوية' },
+                    { value: 'fixed', label: 'مبلغ ثابت' },
+                  ]}
+                />
               </div>
               <div>
                 <Label>القيمة *</Label>

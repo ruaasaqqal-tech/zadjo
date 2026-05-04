@@ -12,8 +12,8 @@ export default function SearchBar({ value, onChange }) {
         className="pr-10 pl-10 h-12 rounded-2xl bg-card border-border/50 text-sm"
       />
       {value && (
-        <button onClick={() => onChange('')} className="absolute left-3 top-1/2 -translate-y-1/2">
-          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        <button onClick={() => onChange('')} className="absolute left-1 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center rounded-xl hover:bg-muted active:bg-muted/80 transition-colors">
+          <X className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
     </div>

@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MobileSelect from '@/components/MobileSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -145,13 +145,16 @@ export default function AdminMeals() {
             </div>
             <div>
               <Label>المطبخ *</Label>
-              <Select value={form.kitchen_id} onValueChange={v => {
-                const k = kitchens.find(k => k.id === v);
-                setForm({ ...form, kitchen_id: v, cook_name: k ? k.cook_name : form.cook_name });
-              }}>
-                <SelectTrigger className="rounded-xl mt-1"><SelectValue placeholder="اختر مطبخاً" /></SelectTrigger>
-                <SelectContent>{kitchens.map(k => <SelectItem key={k.id} value={k.id}>{k.cook_name}</SelectItem>)}</SelectContent>
-              </Select>
+              <MobileSelect
+                value={form.kitchen_id}
+                onValueChange={v => {
+                  const k = kitchens.find(k => k.id === v);
+                  setForm({ ...form, kitchen_id: v, cook_name: k ? k.cook_name : form.cook_name });
+                }}
+                placeholder="اختر مطبخاً"
+                className="mt-1"
+                options={kitchens.map(k => ({ value: k.id, label: k.cook_name }))}
+              />
             </div>
             <div>
               <Label>الوصف</Label>
@@ -170,17 +173,23 @@ export default function AdminMeals() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>التصنيف</Label>
-                <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
-                  <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
+                <MobileSelect
+                  value={form.category}
+                  onValueChange={v => setForm({ ...form, category: v })}
+                  placeholder="التصنيف"
+                  className="mt-1"
+                  options={CATEGORIES.map(c => ({ value: c, label: c }))}
+                />
               </div>
               <div>
                 <Label>شارة</Label>
-                <Select value={form.badge} onValueChange={v => setForm({ ...form, badge: v })}>
-                  <SelectTrigger className="rounded-xl mt-1"><SelectValue placeholder="بدون" /></SelectTrigger>
-                  <SelectContent>{BADGES.map(b => <SelectItem key={b || 'none'} value={b}>{b || 'بدون'}</SelectItem>)}</SelectContent>
-                </Select>
+                <MobileSelect
+                  value={form.badge}
+                  onValueChange={v => setForm({ ...form, badge: v })}
+                  placeholder="بدون"
+                  className="mt-1"
+                  options={BADGES.map(b => ({ value: b, label: b || 'بدون' }))}
+                />
               </div>
             </div>
             <div>
