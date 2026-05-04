@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import ReviewModal from '@/components/ReviewModal';
 import { useLang } from '@/lib/i18n';
+import PullToRefresh from '@/components/PullToRefresh';
 
 const STATUS_STEPS = [
   { key: 'تم الطلب', icon: Package },
@@ -58,13 +59,14 @@ export default function TrackOrder() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchOrders = useCallback(async () => {
     if (!user?.email) return;
-    base44.entities.Order.filter({ created_by: user.email }, '-created_date', 20).then((data) => {
-      setOrders(data);
-      setIsLoading(false);
-    });
+    const data = await base44.entities.Order.filter({ created_by: user.email }, '-created_date', 20);
+    setOrders(data);
+    setIsLoading(false);
   }, [user?.email]);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   // Real-time subscription — refresh from server on any update to ensure data is up-to-date
   useEffect(() => {
@@ -99,8 +101,16 @@ export default function TrackOrder() {
       toast.error(t('cancelExpired'));
       return;
     }
-    await base44.entities.Order.update(order.id, { status: 'ملغي' });
-    toast.success(t('orderCancelled'));
+    // Optimistic update
+    setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'ملغي' } : o));
+    try {
+      await base44.entities.Order.update(order.id, { status: 'ملغي' });
+      toast.success(t('orderCancelled'));
+    } catch {
+      // Revert on failure
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: order.status } : o));
+      toast.error('فشل الإلغاء، حاول مجدداً');
+    }
   };
 
   const handleReviewDone = (orderId) => {
@@ -110,6 +120,7 @@ export default function TrackOrder() {
   };
 
   return (
+    <PullToRefresh onRefresh={fetchOrders}>
     <div className="max-w-lg mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-6 text-center">{t('myOrders')}</h1>
 
@@ -234,5 +245,6 @@ export default function TrackOrder() {
         )}
       </AnimatePresence>
     </div>
+    </PullToRefresh>
   );
 }
