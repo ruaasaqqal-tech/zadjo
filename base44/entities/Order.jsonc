@@ -117,7 +117,18 @@
   ],
   "rls": {
     "create": {
-      "created_by": "{{user.email}}"
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
@@ -134,12 +145,19 @@
     "update": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "$and": [
+            {
+              "created_by": "{{user.email}}"
+            },
+            {
+              "data.status": "\u062a\u0645 \u0627\u0644\u0637\u0644\u0628"
+            }
+          ]
         }
       ]
     },
