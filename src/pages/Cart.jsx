@@ -262,7 +262,7 @@ export default function Cart() {
             <div className={`rounded-xl px-4 py-2.5 text-sm font-bold flex items-center gap-2 ${
               tooFar
                 ? 'bg-red-50 border border-red-300 text-red-700'
-                : 'bg-blue-50 border border-blue-200 text-blue-700'
+                : 'bg-purple-50 border border-purple-200 text-purple-700'
             }`}>
               <MapPin className="h-4 w-4" />
               {tooFar
