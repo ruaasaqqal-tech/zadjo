@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { sendLocalNotification } from '@/hooks/useNotifications';
 
 const STATUS_CONFIG = {
-  'تم الطلب':    { icon: Package,     color: 'bg-blue-100 text-blue-700',       step: 1 },
+  'تم الطلب':    { icon: Package,     color: 'bg-purple-100 text-purple-700',       step: 1 },
   'قيد التحضير': { icon: Clock,       color: 'bg-amber-100 text-amber-700',     step: 2 },
   'في الطريق':   { icon: Truck,       color: 'bg-violet-100 text-violet-700',   step: 3 },
   'تم التوصيل':  { icon: CheckCircle, color: 'bg-emerald-100 text-emerald-700', step: 4 },
