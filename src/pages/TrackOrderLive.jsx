@@ -8,8 +8,8 @@ import { useLang } from '@/lib/i18n';
 import { useCallback } from 'react';
 
 const STATUS_CONFIG = {
-  'تم الطلب': { step: 1, label: '✅ تم قبول الطلب', color: 'bg-green-100 text-green-700' },
-  'قيد التحضير': { step: 2, label: '🍽️ قيد التحضير', color: 'bg-blue-100 text-blue-700' },
+  'تم الطلب': { step: 1, label: '✅ تم قبول الطلب', color: 'bg-purple-100 text-purple-700' },
+  'قيد التحضير': { step: 2, label: '🍽️ قيد التحضير', color: 'bg-purple-100 text-purple-700' },
   'في الطريق': { step: 3, label: '🚗 بالطريق إليك', color: 'bg-purple-100 text-purple-700' },
   'تم التوصيل': { step: 4, label: '🎉 تم التوصيل', color: 'bg-emerald-100 text-emerald-700' },
 };
