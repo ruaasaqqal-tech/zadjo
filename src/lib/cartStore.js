@@ -1,5 +1,5 @@
 // Simple cart state management using localStorage
-const CART_KEY = 'lugma_cart';
+const CART_KEY = 'zadjo_cart';
 
 export function getCart() {
   const data = localStorage.getItem(CART_KEY);
