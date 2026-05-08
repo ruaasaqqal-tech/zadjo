@@ -66,8 +66,22 @@ Deno.serve(async (req) => {
       read: false
     });
 
-    return Response.json({ ok: true, targetRole, title, message });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
+    return Response.json({
+    ok: true,
+    targetRole,
+    title,
+    message
+  });
+
+} catch (error) {
+
+  console.log(error);
+
+  return Response.json(
+    { error: error.message },
+    { status: 500 }
+  );
+
+}
+
 });
