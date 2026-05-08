@@ -26,6 +26,6 @@ export const MAX_DELIVERY_KM = 4;
 
 export function buildWhatsAppURL(phone, mealName) {
   const number = phone?.replace(/\D/g, '') || '962776241441';
-  const msg = encodeURIComponent(`مرحبا، بدي أطلب ${mealName} من لقمة بيت`);
+  const msg = encodeURIComponent(`مرحبا، بدي أطلب ${mealName} من زاد جو `);
   return `https://wa.me/${number}?text=${msg}`;
 }
