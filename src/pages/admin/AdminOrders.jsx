@@ -8,7 +8,7 @@ const STATUSES = ['الكل', 'تم الطلب', 'قيد التحضير', 'في 
 const STATUS_FLOW = ['تم الطلب', 'قيد التحضير', 'في الطريق', 'تم التوصيل'];
 
 const STATUS_CONFIG = {
-  'تم الطلب': { icon: Package, color: 'bg-blue-100 text-blue-700' },
+  'تم الطلب': { icon: Package, color: 'bg-purple-100 text-purple-700' },
   'قيد التحضير': { icon: Clock, color: 'bg-amber-100 text-amber-700' },
   'في الطريق': { icon: Truck, color: 'bg-violet-100 text-violet-700' },
   'تم التوصيل': { icon: CheckCircle, color: 'bg-emerald-100 text-emerald-700' },
