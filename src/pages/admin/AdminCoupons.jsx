@@ -117,7 +117,7 @@ export default function AdminCoupons() {
           <div className="space-y-4 mt-4">
             <div>
               <Label>كود الخصم *</Label>
-              <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} className="rounded-xl mt-1 font-mono" dir="ltr" placeholder="LUGMA10" />
+              <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} className="rounded-xl mt-1 font-mono" dir="ltr" placeholder="zadjo10" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
