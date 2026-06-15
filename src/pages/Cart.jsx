@@ -12,6 +12,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/i18n';
+import CouponAssistant from '@/components/CouponAssistant';
 
 function calcDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -306,6 +307,21 @@ export default function Cart() {
       >
         {submitting ? t('sendingOrder') : `${t('confirmOrder')} — ${total.toFixed(2)} د.أ`}
       </Button>
+
+      <CouponAssistant
+        cartTotal={subtotal}
+        onApplyCoupon={async (code) => {
+          setCouponCode(code);
+          const allCoupons = await base44.entities.Coupon.list();
+          const coupon = allCoupons.find(c => c.code?.trim().toUpperCase() === code.toUpperCase() && c.active !== false);
+          if (!coupon) { toast.error(t('couponInvalid')); return; }
+          if (coupon.min_order && subtotal < coupon.min_order) { toast.error(`${t('couponMinOrder')} ${coupon.min_order} د.أ`); return; }
+          const d = coupon.discount_type === 'percentage' ? subtotal * (coupon.discount_value / 100) : coupon.discount_value;
+          setDiscount(d);
+          setDiscountInfo(coupon);
+          toast.success(`✅ ${t('couponApplied')}`);
+        }}
+      />
     </div>
   );
 }

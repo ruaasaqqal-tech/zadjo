@@ -73,7 +73,7 @@ export default function Dashboard() {
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="orders" fill="hsl(25, 100%, 50%)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="orders" fill="#6A1B9A" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
