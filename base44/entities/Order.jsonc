@@ -133,7 +133,7 @@
     "read": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "created_by_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -152,12 +152,29 @@
         {
           "$and": [
             {
-              "created_by": "{{user.email}}"
+              "created_by_id": "{{user.id}}"
             },
             {
               "data.status": "\u062a\u0645 \u0627\u0644\u0637\u0644\u0628"
             }
           ]
+        },
+        {
+          "$and": [
+            {
+              "user_condition": {
+                "role": "kitchen"
+              }
+            },
+            {
+              "data.kitchen_name": "{{user.full_name}}"
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "role": "driver"
+          }
         }
       ]
     },
