@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import ReviewModal from '@/components/ReviewModal';
 import { useLang } from '@/lib/i18n';
 import PullToRefresh from '@/components/PullToRefresh';
+import OrderTrackerChat from '@/components/OrderTrackerChat';
 
 const STATUS_STEPS = [
   { key: 'تم الطلب', icon: Package },
@@ -234,6 +235,8 @@ export default function TrackOrder() {
           );
         })}
       </div>
+
+      <OrderTrackerChat />
 
       <AnimatePresence>
         {reviewOrder && (
